@@ -4,16 +4,17 @@ import { Btn } from "../components/shared.jsx";
 function parseInterpretation(text) {
   if (!text) return [];
   return text.split("\n").map((line, i) => {
-    if (line.startsWith("**") && line.endsWith("**")) {
-      return { type: "heading", text: line.slice(2, -2), key: i };
+    const t = line.trim();
+    if (t.startsWith("**") && t.endsWith("**")) {
+      return { type: "heading", text: t.slice(2, -2), key: i };
     }
-    if (line.startsWith("- ")) {
-      return { type: "bullet", text: line.slice(2), key: i };
+    if (t.startsWith("- ")) {
+      return { type: "bullet", text: t.slice(2), key: i };
     }
-    if (!line.trim()) {
+    if (!t) {
       return { type: "spacer", key: i };
     }
-    return { type: "text", text: line, key: i };
+    return { type: "text", text: t, key: i };
   });
 }
 
