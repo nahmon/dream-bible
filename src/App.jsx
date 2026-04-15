@@ -47,7 +47,7 @@ export default function App() {
       setUser(u);
       if (u) {
         loadUsage(u.id);
-        setScreen(prev => (["landing", "auth"].includes(prev) ? "dream" : prev));
+        setScreen("dream");
       } else {
         setScreen("landing");
       }
