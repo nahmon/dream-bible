@@ -38,7 +38,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { dream_text, user_id } = req.body ?? {};
+  const { dream_text } = req.body ?? {};
 
   if (!dream_text?.trim()) {
     return res.status(400).json({ error: "dream_text is required" });
@@ -48,9 +48,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "꿈 내용을 좀 더 자세히 입력해 주세요 (10자 이상)" });
   }
 
-  if (!user_id) {
+  if (dream_text.trim().length > 2000) {
+    return res.status(400).json({ error: "꿈 내용은 2000자 이내로 입력해 주세요" });
+  }
+
+  // Verify user from JWT
+  const token = req.headers.authorization?.replace("Bearer ", "");
+  if (!token) {
     return res.status(401).json({ error: "로그인이 필요합니다" });
   }
+  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+  if (authErr || !user) {
+    return res.status(401).json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." });
+  }
+  const user_id = user.id;
 
   // Check monthly usage limit
   const month = CURRENT_MONTH();
@@ -81,7 +92,7 @@ export default async function handler(req, res) {
       max_tokens: 800,
       temperature: 0.7,
     });
-    interpretation = completion.choices[0].message.content;
+    interpretation = completion.choices[0]?.message?.content ?? "";
   } catch (err) {
     console.error("OpenAI error:", err);
     return res.status(500).json({ error: "AI 해석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
@@ -100,10 +111,13 @@ export default async function handler(req, res) {
   }
 
   // Upsert usage count
-  await supabase.from("dream_usage").upsert(
+  const { error: upsertErr } = await supabase.from("dream_usage").upsert(
     { user_id, month, count: currentCount + 1 },
     { onConflict: "user_id,month" }
   );
+  if (upsertErr) {
+    console.error("Usage upsert error (dream saved, count not incremented):", upsertErr, { dream_id: dream.id });
+  }
 
   return res.status(200).json({
     interpretation,
