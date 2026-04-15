@@ -32,3 +32,5 @@ create policy "Users can read own usage"
   using (auth.uid() = user_id);
 
 -- Service role bypasses RLS by default (used in api/interpret.js for upsert)
+
+create index idx_dreams_user_id on dreams(user_id);
