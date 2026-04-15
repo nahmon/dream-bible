@@ -20,15 +20,18 @@ export default function HistoryScreen({ go, user }) {
 
   useEffect(() => {
     if (!user) return;
+    let isMounted = true;
     supabase
       .from("dreams")
       .select("id, dream_text, interpretation, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
+        if (!isMounted) return;
         if (!error) setDreams(data ?? []);
         setLoading(false);
       });
+    return () => { isMounted = false; };
   }, [user]);
 
   const selectedDream = dreams.find(d => d.id === selected);
@@ -46,7 +49,7 @@ export default function HistoryScreen({ go, user }) {
         <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
           <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: "16px 20px", marginBottom: 20 }}>
             <div style={{ fontSize: 12, color: C.body, marginBottom: 6, fontWeight: 500 }}>꿈 내용</div>
-            <p style={{ fontSize: 15, color: C.label, lineHeight: 1.6 }}>{selectedDream.dream_text}</p>
+            <p style={{ fontSize: 15, color: C.label, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{selectedDream.dream_text}</p>
           </div>
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: "20px 24px" }}>
             <div style={{ fontSize: 12, color: C.body, marginBottom: 12, fontWeight: 500 }}>성경적 묵상</div>
