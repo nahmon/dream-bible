@@ -29,7 +29,10 @@ export function ToastProvider({ children }) {
 
 export function useToast() {
   const ctx = useContext(ToastCtx);
-  if (!ctx) return { showToast: () => {} };
+  if (!ctx) {
+    console.warn("useToast called outside ToastProvider — toasts will not display");
+    return { showToast: () => {} };
+  }
   return ctx;
 }
 
