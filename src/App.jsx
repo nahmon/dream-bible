@@ -64,14 +64,15 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div style={{ minHeight: "100vh", background: C.cream, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F }}>
-        <div style={{ fontSize: 15, color: "#6B7B8F" }}>잠시만요...</div>
+      <div style={{ minHeight: "100vh", background: C.heroBlack, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: F }}>
+        <div style={{ fontSize: 15, color: "rgba(255,255,255,0.5)" }}>잠시만요...</div>
       </div>
     );
   }
 
   const guardedScreen = (s) => {
-    if (!user && ["dream", "history"].includes(s)) return "auth";
+    // Only history requires login; dream is open to guests
+    if (!user && s === "history") return "auth";
     return s;
   };
 
@@ -82,23 +83,23 @@ export default function App() {
       <div style={{ fontFamily: F, color: C.navy }}>
         {active === "landing"  && <LandingScreen go={go} user={user} logout={logout} />}
         {active === "auth"     && <AuthScreen go={go} />}
-        {active === "dream"    && <DreamScreen go={go} usageRemaining={usageRemaining} />}
-        {active === "result"   && <ResultScreen go={go} result={result} />}
+        {active === "dream"    && <DreamScreen go={go} user={user} usageRemaining={usageRemaining} />}
+        {active === "result"   && <ResultScreen go={go} result={result} user={user} />}
         {active === "history"  && <HistoryScreen go={go} user={user} />}
         {active === "pricing"  && (
-          <div style={{ minHeight: "100vh", background: C.cream, fontFamily: F, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ minHeight: "100vh", background: C.heroBlack, fontFamily: F, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
             <div style={{ maxWidth: 400, textAlign: "center" }}>
-              <div style={{ fontSize: 40, marginBottom: 16 }}>✦</div>
-              <h1 style={{ fontSize: 24, fontWeight: 800, color: C.navy, marginBottom: 12 }}>무제한 플랜</h1>
-              <p style={{ fontSize: 15, color: "#6B7B8F", lineHeight: 1.6, marginBottom: 24 }}>
-                월 <strong style={{ color: C.navy, fontSize: 20 }}>₩4,900</strong>으로<br />
+              <div style={{ fontSize: 40, marginBottom: 16, color: "#fff" }}>✦</div>
+              <h1 style={{ fontSize: 28, fontWeight: 600, color: "#fff", marginBottom: 12, letterSpacing: "-0.28px" }}>무제한 플랜</h1>
+              <p style={{ fontSize: 17, color: "rgba(255,255,255,0.7)", lineHeight: 1.47, marginBottom: 24, letterSpacing: "-0.374px" }}>
+                월 <strong style={{ color: "#fff", fontSize: 20 }}>₩4,900</strong>으로<br />
                 꿈 해석을 무제한으로 받아보세요
               </p>
-              <p style={{ fontSize: 13, color: "#6B7B8F", marginBottom: 24 }}>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.4)", marginBottom: 24, letterSpacing: "-0.224px" }}>
                 결제 기능은 곧 추가될 예정입니다.<br />
                 출시 알림을 받으시려면 이메일을 등록해 주세요.
               </p>
-              <button onClick={() => go("dream")} style={{ background: "none", border: "none", color: "#C9A84C", fontFamily: F, fontSize: 14, cursor: "pointer", textDecoration: "underline" }}>
+              <button onClick={() => go("dream")} style={{ background: "none", border: "none", color: C.blueBright, fontFamily: F, fontSize: 14, cursor: "pointer", textDecoration: "underline" }}>
                 돌아가기
               </button>
             </div>

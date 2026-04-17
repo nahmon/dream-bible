@@ -3,6 +3,16 @@ import { C, F, Ic } from "../lib/constants.jsx";
 import { Btn, Skeleton } from "../components/shared.jsx";
 import { supabase } from "../supabase.js";
 
+const NAV_STYLE = {
+  position: "sticky", top: 0, zIndex: 100,
+  height: 48,
+  background: "rgba(0,0,0,0.8)",
+  backdropFilter: "saturate(180%) blur(20px)",
+  WebkitBackdropFilter: "saturate(180%) blur(20px)",
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  padding: "0 24px",
+};
+
 function formatDate(iso) {
   const d = new Date(iso);
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
@@ -39,21 +49,22 @@ export default function HistoryScreen({ go, user }) {
   // Detail view
   if (selected && selectedDream) {
     return (
-      <div style={{ minHeight: "100vh", background: C.cream, fontFamily: F }}>
-        <nav style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 24px", background: C.white, borderBottom: `1px solid ${C.border}` }}>
-          <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: 14, color: C.navy, padding: 0 }}>
-            ← 목록으로
+      <div style={{ minHeight: "100vh", background: C.gray, fontFamily: F }}>
+        <nav style={NAV_STYLE}>
+          <button onClick={() => setSelected(null)} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+            <span style={{ fontSize: 16, color: "rgba(255,255,255,0.85)" }}>←</span>
+            <span style={{ fontSize: 14, fontWeight: 400, color: "rgba(255,255,255,0.85)", letterSpacing: "-0.2px" }}>목록으로</span>
           </button>
-          <span style={{ fontSize: 14, color: C.body }}>{formatDate(selectedDream.created_at)}</span>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", letterSpacing: "-0.12px" }}>{formatDate(selectedDream.created_at)}</span>
         </nav>
-        <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
-          <div style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: "16px 20px", marginBottom: 20 }}>
-            <div style={{ fontSize: 12, color: C.body, marginBottom: 6, fontWeight: 500 }}>꿈 내용</div>
-            <p style={{ fontSize: 15, color: C.label, lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{selectedDream.dream_text}</p>
+        <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px 60px" }}>
+          <div style={{ background: C.white, borderRadius: 12, padding: "16px 20px", marginBottom: 14, boxShadow: "rgba(0,0,0,0.06) 0px 1px 8px 0px" }}>
+            <div style={{ fontSize: 12, color: C.body, marginBottom: 6, fontWeight: 500, letterSpacing: "-0.12px" }}>꿈 내용</div>
+            <p style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.6, whiteSpace: "pre-wrap", letterSpacing: "-0.224px" }}>{selectedDream.dream_text}</p>
           </div>
-          <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: "20px 24px" }}>
-            <div style={{ fontSize: 12, color: C.body, marginBottom: 12, fontWeight: 500 }}>성경적 묵상</div>
-            <p style={{ fontSize: 15, color: C.label, lineHeight: 1.8, whiteSpace: "pre-wrap" }}>{selectedDream.interpretation}</p>
+          <div style={{ background: C.white, borderRadius: 12, padding: "20px 24px", boxShadow: "rgba(0,0,0,0.06) 0px 1px 8px 0px" }}>
+            <div style={{ fontSize: 12, color: C.body, marginBottom: 12, fontWeight: 500, letterSpacing: "-0.12px" }}>성경적 묵상</div>
+            <p style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.8, whiteSpace: "pre-wrap", letterSpacing: "-0.224px" }}>{selectedDream.interpretation}</p>
           </div>
         </div>
       </div>
@@ -62,17 +73,17 @@ export default function HistoryScreen({ go, user }) {
 
   // List view
   return (
-    <div style={{ minHeight: "100vh", background: C.cream, fontFamily: F }}>
-      <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: C.white, borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Ic.Star s={18} c={C.gold} />
-          <span style={{ fontSize: 16, fontWeight: 700, color: C.navy }}>꿈묵상</span>
-        </div>
-        <Btn size="sm" variant="gold" onClick={() => go("dream")}>새 꿈 기록</Btn>
+    <div style={{ minHeight: "100vh", background: C.gray, fontFamily: F }}>
+      <nav style={NAV_STYLE}>
+        <button onClick={() => go("landing")} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <Ic.Cross s={14} c="rgba(255,255,255,0.85)" />
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>꿈묵상</span>
+        </button>
+        <Btn size="sm" variant="primary" onClick={() => go("dream")}>새 꿈 기록</Btn>
       </nav>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: C.navy, marginBottom: 24, letterSpacing: "-0.4px" }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 60px" }}>
+        <h1 style={{ fontSize: 28, fontWeight: 600, color: C.nearBlack, marginBottom: 24, letterSpacing: "-0.28px", lineHeight: 1.14 }}>
           내 꿈 기록
         </h1>
 
@@ -83,28 +94,28 @@ export default function HistoryScreen({ go, user }) {
         ) : dreams.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>🌙</div>
-            <div style={{ fontSize: 16, color: C.navy, fontWeight: 600, marginBottom: 8 }}>아직 기록된 꿈이 없습니다</div>
-            <div style={{ fontSize: 14, color: C.body, marginBottom: 24 }}>오늘 꿈을 기록해 성경으로 돌아보세요</div>
-            <Btn variant="gold" onClick={() => go("dream")}>첫 꿈 기록하기</Btn>
+            <div style={{ fontSize: 17, color: C.nearBlack, fontWeight: 600, marginBottom: 8, letterSpacing: "-0.374px" }}>아직 기록된 꿈이 없습니다</div>
+            <div style={{ fontSize: 14, color: C.body, marginBottom: 28, letterSpacing: "-0.224px" }}>오늘 꿈을 기록해 성경으로 돌아보세요</div>
+            <Btn variant="primary" onClick={() => go("dream")}>첫 꿈 기록하기</Btn>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {dreams.map(d => (
               <div
                 key={d.id}
                 onClick={() => setSelected(d.id)}
-                style={{ background: C.white, borderRadius: 12, border: `1px solid ${C.border}`, padding: "16px 20px", cursor: "pointer", transition: "box-shadow 0.2s" }}
-                onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(27,42,74,0.10)"; }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
+                style={{ background: C.white, borderRadius: 12, padding: "16px 20px", cursor: "pointer", boxShadow: "rgba(0,0,0,0.06) 0px 1px 8px 0px", transition: "box-shadow 0.18s" }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = "rgba(0,0,0,0.14) 0px 4px 20px 0px"; }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = "rgba(0,0,0,0.06) 0px 1px 8px 0px"; }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: C.body }}>{formatDate(d.created_at)}</span>
+                  <span style={{ fontSize: 12, color: C.body, letterSpacing: "-0.12px" }}>{formatDate(d.created_at)}</span>
                   <Ic.ChevronRight s={14} c={C.body} />
                 </div>
-                <p style={{ fontSize: 15, color: C.navy, lineHeight: 1.5, marginBottom: 6 }}>
+                <p style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.5, marginBottom: 5, letterSpacing: "-0.224px" }}>
                   {truncate(d.dream_text)}
                 </p>
-                <p style={{ fontSize: 13, color: C.body, lineHeight: 1.4 }}>
+                <p style={{ fontSize: 13, color: C.body, lineHeight: 1.4, letterSpacing: "-0.224px" }}>
                   {truncate(d.interpretation?.replace(/\*\*/g, "").replace(/^- /gm, ""), 80)}
                 </p>
               </div>

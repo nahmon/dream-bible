@@ -52,32 +52,35 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "꿈 내용은 2000자 이내로 입력해 주세요" });
   }
 
-  // Verify user from JWT
+  // Auth is optional — guests get interpretation without DB save
   const token = req.headers.authorization?.replace("Bearer ", "");
-  if (!token) {
-    return res.status(401).json({ error: "로그인이 필요합니다" });
+  let user = null;
+  if (token) {
+    const { data, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !data?.user) {
+      return res.status(401).json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." });
+    }
+    user = data.user;
   }
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
-  if (authErr || !user) {
-    return res.status(401).json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." });
-  }
-  const user_id = user.id;
 
-  // Check monthly usage limit
-  const month = CURRENT_MONTH();
-  const { data: usage } = await supabase
-    .from("dream_usage")
-    .select("count")
-    .eq("user_id", user_id)
-    .eq("month", month)
-    .single();
+  // Check monthly usage limit (logged-in users only)
+  let currentCount = 0;
+  if (user) {
+    const month = CURRENT_MONTH();
+    const { data: usage } = await supabase
+      .from("dream_usage")
+      .select("count")
+      .eq("user_id", user.id)
+      .eq("month", month)
+      .single();
 
-  const currentCount = usage?.count ?? 0;
-  if (currentCount >= FREE_LIMIT) {
-    return res.status(403).json({
-      error: "이번 달 무료 해석 횟수(3회)를 모두 사용하셨습니다",
-      code: "LIMIT_REACHED",
-    });
+    currentCount = usage?.count ?? 0;
+    if (currentCount >= FREE_LIMIT) {
+      return res.status(403).json({
+        error: "이번 달 무료 해석 횟수(3회)를 모두 사용하셨습니다",
+        code: "LIMIT_REACHED",
+      });
+    }
   }
 
   // Call OpenAI
@@ -98,30 +101,40 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "AI 해석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
   }
 
-  // Save dream to DB
-  const { data: dream, error: dreamErr } = await supabase
-    .from("dreams")
-    .insert({ user_id, dream_text: dream_text.trim(), interpretation })
-    .select("id")
-    .single();
+  // Save to DB and update usage (logged-in users only)
+  if (user) {
+    const month = CURRENT_MONTH();
 
-  if (dreamErr) {
-    console.error("DB insert error:", dreamErr);
-    return res.status(500).json({ error: "저장 중 오류가 발생했습니다" });
+    const { data: dream, error: dreamErr } = await supabase
+      .from("dreams")
+      .insert({ user_id: user.id, dream_text: dream_text.trim(), interpretation })
+      .select("id")
+      .single();
+
+    if (dreamErr) {
+      console.error("DB insert error:", dreamErr);
+      return res.status(500).json({ error: "저장 중 오류가 발생했습니다" });
+    }
+
+    const { error: upsertErr } = await supabase.from("dream_usage").upsert(
+      { user_id: user.id, month, count: currentCount + 1 },
+      { onConflict: "user_id,month" }
+    );
+    if (upsertErr) {
+      console.error("Usage upsert error (dream saved, count not incremented):", upsertErr, { dream_id: dream.id });
+    }
+
+    return res.status(200).json({
+      interpretation,
+      dream_id: dream.id,
+      usage_remaining: FREE_LIMIT - (currentCount + 1),
+    });
   }
 
-  // Upsert usage count
-  const { error: upsertErr } = await supabase.from("dream_usage").upsert(
-    { user_id, month, count: currentCount + 1 },
-    { onConflict: "user_id,month" }
-  );
-  if (upsertErr) {
-    console.error("Usage upsert error (dream saved, count not incremented):", upsertErr, { dream_id: dream.id });
-  }
-
+  // Guest response — no dream_id, no usage tracking
   return res.status(200).json({
     interpretation,
-    dream_id: dream.id,
-    usage_remaining: FREE_LIMIT - (currentCount + 1),
+    dream_id: null,
+    usage_remaining: null,
   });
 }
