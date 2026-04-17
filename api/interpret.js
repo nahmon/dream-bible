@@ -1,15 +1,6 @@
 import OpenAI from "openai";
-import { createClient } from "@supabase/supabase-js";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const FREE_LIMIT = 3;
-const CURRENT_MONTH = () => new Date().toISOString().slice(0, 7); // 'YYYY-MM'
 
 const SYSTEM_PROMPT = `당신은 성경에 기반한 꿈 묵상 가이드입니다.
 사용자가 꿈 내용을 공유하면, 다음 원칙에 따라 응답하세요:
@@ -33,6 +24,11 @@ const SYSTEM_PROMPT = `당신은 성경에 기반한 꿈 묵상 가이드입니�
 **오늘의 기도 방향**
 (짧은 기도 제목 또는 묵상 방향)`;
 
+function buildImagePrompt(dreamText) {
+  const trimmed = dreamText.trim().slice(0, 200);
+  return `A serene biblical illuminated manuscript illustration inspired by this dream: "${trimmed}". Style: classical Renaissance painting with gold leaf accents, warm heavenly amber light streaming from above, soft celestial clouds, symbolic Christian imagery, peaceful and contemplative atmosphere, rich jewel-toned colors, detailed spiritual artwork. No text, no writing.`;
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -43,50 +39,16 @@ export default async function handler(req, res) {
   if (!dream_text?.trim()) {
     return res.status(400).json({ error: "dream_text is required" });
   }
-
   if (dream_text.trim().length < 10) {
     return res.status(400).json({ error: "꿈 내용을 좀 더 자세히 입력해 주세요 (10자 이상)" });
   }
-
   if (dream_text.trim().length > 2000) {
     return res.status(400).json({ error: "꿈 내용은 2000자 이내로 입력해 주세요" });
   }
 
-  // Auth is optional — guests get interpretation without DB save
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  let user = null;
-  if (token) {
-    const { data, error: authErr } = await supabase.auth.getUser(token);
-    if (authErr || !data?.user) {
-      return res.status(401).json({ error: "인증이 만료되었습니다. 다시 로그인해 주세요." });
-    }
-    user = data.user;
-  }
-
-  // Check monthly usage limit (logged-in users only)
-  let currentCount = 0;
-  if (user) {
-    const month = CURRENT_MONTH();
-    const { data: usage } = await supabase
-      .from("dream_usage")
-      .select("count")
-      .eq("user_id", user.id)
-      .eq("month", month)
-      .single();
-
-    currentCount = usage?.count ?? 0;
-    if (currentCount >= FREE_LIMIT) {
-      return res.status(403).json({
-        error: "이번 달 무료 해석 횟수(3회)를 모두 사용하셨습니다",
-        code: "LIMIT_REACHED",
-      });
-    }
-  }
-
-  // Call OpenAI
-  let interpretation;
-  try {
-    const completion = await openai.chat.completions.create({
+  // Run interpretation and image generation in parallel
+  const [interpretResult, imageResult] = await Promise.allSettled([
+    openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
@@ -94,47 +56,29 @@ export default async function handler(req, res) {
       ],
       max_tokens: 800,
       temperature: 0.7,
-    });
-    interpretation = completion.choices[0]?.message?.content ?? "";
-  } catch (err) {
-    console.error("OpenAI error:", err);
+    }),
+    openai.images.generate({
+      model: "dall-e-3",
+      prompt: buildImagePrompt(dream_text),
+      size: "1024x1024",
+      quality: "standard",
+      n: 1,
+    }),
+  ]);
+
+  if (interpretResult.status === "rejected") {
+    console.error("OpenAI interpret error:", interpretResult.reason);
     return res.status(500).json({ error: "AI 해석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
   }
 
-  // Save to DB and update usage (logged-in users only)
-  if (user) {
-    const month = CURRENT_MONTH();
+  const interpretation = interpretResult.value.choices[0]?.message?.content ?? "";
+  const image_url = imageResult.status === "fulfilled"
+    ? imageResult.value.data[0]?.url ?? null
+    : null;
 
-    const { data: dream, error: dreamErr } = await supabase
-      .from("dreams")
-      .insert({ user_id: user.id, dream_text: dream_text.trim(), interpretation })
-      .select("id")
-      .single();
-
-    if (dreamErr) {
-      console.error("DB insert error:", dreamErr);
-      return res.status(500).json({ error: "저장 중 오류가 발생했습니다" });
-    }
-
-    const { error: upsertErr } = await supabase.from("dream_usage").upsert(
-      { user_id: user.id, month, count: currentCount + 1 },
-      { onConflict: "user_id,month" }
-    );
-    if (upsertErr) {
-      console.error("Usage upsert error (dream saved, count not incremented):", upsertErr, { dream_id: dream.id });
-    }
-
-    return res.status(200).json({
-      interpretation,
-      dream_id: dream.id,
-      usage_remaining: FREE_LIMIT - (currentCount + 1),
-    });
+  if (imageResult.status === "rejected") {
+    console.warn("Image generation failed (non-fatal):", imageResult.reason?.message);
   }
 
-  // Guest response — no dream_id, no usage tracking
-  return res.status(200).json({
-    interpretation,
-    dream_id: null,
-    usage_remaining: null,
-  });
+  return res.status(200).json({ interpretation, image_url });
 }

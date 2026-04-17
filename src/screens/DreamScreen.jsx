@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { C, F, Ic } from "../lib/constants.jsx";
 import { Btn, useToast } from "../components/shared.jsx";
-import { supabase } from "../supabase.js";
 
 const EXAMPLES = [
   "하늘을 날고 있었는데 구름 사이로 빛이 비쳤어요",
@@ -19,48 +18,32 @@ const NAV_STYLE = {
   padding: "0 24px",
 };
 
-export default function DreamScreen({ go, user, usageRemaining }) {
+export default function DreamScreen({ go }) {
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
-  const remaining = usageRemaining ?? 3;
 
   const handleSubmit = async () => {
     if (dream.trim().length < 10) {
       showToast("꿈 내용을 10자 이상 입력해 주세요", "error");
       return;
     }
-    if (user && remaining <= 0) {
-      go("pricing");
-      return;
-    }
 
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const res = await fetch("/api/interpret", {
         method: "POST",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ dream_text: dream }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.code === "LIMIT_REACHED") {
-          showToast("이번 달 무료 해석을 모두 사용했습니다", "warning");
-          go("pricing");
-          return;
-        }
         showToast(data.error || "오류가 발생했습니다", "error");
         return;
       }
 
-      go("result", { interpretation: data.interpretation, dream_text: dream, dream_id: data.dream_id, usage_remaining: data.usage_remaining });
+      go("result", { interpretation: data.interpretation, dream_text: dream, image_url: data.image_url });
     } catch (err) {
       showToast("네트워크 오류가 발생했습니다", "error");
     } finally {
@@ -76,17 +59,6 @@ export default function DreamScreen({ go, user, usageRemaining }) {
           <Ic.Cross s={14} c="rgba(255,255,255,0.85)" />
           <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>꿈묵상</span>
         </button>
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {user && (
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", letterSpacing: "-0.12px" }}>
-              남은 횟수 <strong style={{ color: remaining > 0 ? "rgba(255,255,255,0.85)" : "#ff6b6b" }}>{remaining}회</strong>
-            </span>
-          )}
-          {user
-            ? <Btn size="sm" variant="ghostDark" onClick={() => go("history")}>기록 보기</Btn>
-            : <Btn size="sm" variant="ghostDark" onClick={() => go("auth")}>로그인</Btn>
-          }
-        </div>
       </nav>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "44px 24px 60px" }}>
@@ -151,26 +123,6 @@ export default function DreamScreen({ go, user, usageRemaining }) {
         </Btn>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-        {user && remaining <= 0 && (
-          <div style={{ marginTop: 16, padding: "12px 16px", background: C.errorBg, borderRadius: 8, fontSize: 14, color: C.error, textAlign: "center", letterSpacing: "-0.224px" }}>
-            이번 달 무료 해석 횟수를 모두 사용했습니다.{" "}
-            <button onClick={() => go("pricing")} style={{ color: C.blue, background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: 14, fontWeight: 600, textDecoration: "underline" }}>
-              무제한 플랜 보기
-            </button>
-          </div>
-        )}
-
-        {/* Login nudge for guests */}
-        {!user && (
-          <div style={{ marginTop: 16, padding: "12px 16px", background: C.goldBg, borderRadius: 8, fontSize: 13, color: C.body, textAlign: "center", letterSpacing: "-0.224px" }}>
-            <button onClick={() => go("auth")} style={{ color: C.blue, background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: 13, fontWeight: 500, textDecoration: "underline" }}>
-              로그인
-            </button>
-            {" "}하면 꿈 기록이 저장됩니다
-          </div>
-        )}
-
-        {/* Disclaimer */}
         <div style={{ marginTop: 20, fontSize: 12, color: "rgba(0,0,0,0.36)", lineHeight: 1.47, letterSpacing: "-0.12px", textAlign: "center" }}>
           이 서비스는 예언이나 점술이 아닌 성경적 묵상 가이드입니다.
         </div>

@@ -4,10 +4,10 @@ import { Btn } from "../components/shared.jsx";
 const FEATURES = [
   { icon: <Ic.Book s={22} c={C.blue} />, title: "성경 말씀 기반", desc: "요셉, 다니엘 등 성경의 꿈 사례와 구절로 해석합니다" },
   { icon: <Ic.Moon s={22} c={C.blue} />, title: "AI 묵상 가이드", desc: "꿈을 분석하고 기도 방향과 말씀 묵상을 제안합니다" },
-  { icon: <Ic.History s={22} c={C.blue} />, title: "꿈 일기 보관", desc: "로그인하면 내 꿈과 해석을 기록하고 언제든 돌아볼 수 있습니다" },
+  { icon: <Ic.Sparkle s={22} c={C.blue} />, title: "성경적 이미지 생성", desc: "꿈의 분위기를 담은 성화 스타일 이미지를 함께 드립니다" },
 ];
 
-export default function LandingScreen({ go, user, logout }) {
+export default function LandingScreen({ go }) {
   return (
     <div style={{ fontFamily: F }}>
       {/* Glass Nav */}
@@ -24,16 +24,7 @@ export default function LandingScreen({ go, user, logout }) {
           <Ic.Cross s={15} c="rgba(255,255,255,0.85)" />
           <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>꿈묵상</span>
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          {user ? (
-            <>
-              <Btn size="sm" variant="ghostDark" onClick={() => go("dream")}>꿈 기록하기</Btn>
-              <Btn size="sm" variant="ghostDark" onClick={logout}>로그아웃</Btn>
-            </>
-          ) : (
-            <Btn size="sm" variant="ghostDark" onClick={() => go("auth")}>로그인</Btn>
-          )}
-        </div>
+        <Btn size="sm" variant="primary" onClick={() => go("dream")}>꿈 기록하기</Btn>
       </nav>
 
       {/* Hero — Dark */}
@@ -68,17 +59,12 @@ export default function LandingScreen({ go, user, logout }) {
             하나님의 말씀 위에서 꿈을 함께 돌아봅니다.
           </p>
 
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
-            <Btn size="lg" variant="primary" onClick={() => go("dream")}>
-              <Ic.Moon s={16} c="#fff" />
-              무료로 시작하기
-            </Btn>
-            <Btn size="lg" variant="ghostDark" onClick={() => go("auth")}>
-              로그인하기
-            </Btn>
-          </div>
+          <Btn size="lg" variant="primary" onClick={() => go("dream")}>
+            <Ic.Moon s={16} c="#fff" />
+            무료로 시작하기
+          </Btn>
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 18, letterSpacing: "-0.224px" }}>
-            매달 3회 무료 · 신용카드 불필요
+            로그인 없이 바로 사용 · 무료
           </div>
         </div>
       </div>
