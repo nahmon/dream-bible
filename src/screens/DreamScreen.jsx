@@ -61,11 +61,54 @@ export default function DreamScreen({ go }) {
         </button>
       </nav>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "44px 24px 60px" }}>
-        <h1 style={{ fontSize: 28, fontWeight: 600, color: C.nearBlack, marginBottom: 8, letterSpacing: "-0.28px", lineHeight: 1.14 }}>
+      {/* Brand Hero */}
+      <div style={{
+        background: "linear-gradient(180deg, #000000 0%, #0a0a14 100%)",
+        padding: "36px 24px 32px", textAlign: "center", position: "relative", overflow: "hidden",
+      }}>
+        {/* Radial glow */}
+        <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 60% 80% at 50% 60%, rgba(0,113,227,0.18) 0%, transparent 70%)", pointerEvents: "none" }} />
+
+        {/* SVG illustration */}
+        <div style={{ position: "relative", display: "inline-block", marginBottom: 16 }}>
+          <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Outer glow ring */}
+            <circle cx="48" cy="52" r="34" fill="rgba(0,113,227,0.08)" />
+            <circle cx="48" cy="52" r="24" fill="rgba(0,113,227,0.10)" />
+            {/* Stars */}
+            <circle cx="14" cy="18" r="1.4" fill="rgba(255,255,255,0.55)" />
+            <circle cx="78" cy="14" r="1.0" fill="rgba(255,255,255,0.40)" />
+            <circle cx="82" cy="36" r="1.6" fill="rgba(255,255,255,0.50)" />
+            <circle cx="8"  cy="50" r="1.0" fill="rgba(255,255,255,0.35)" />
+            <circle cx="88" cy="58" r="1.2" fill="rgba(255,255,255,0.45)" />
+            <circle cx="20" cy="76" r="1.0" fill="rgba(255,255,255,0.30)" />
+            <circle cx="74" cy="80" r="1.4" fill="rgba(255,255,255,0.35)" />
+            {/* Sparkle top-right */}
+            <path d="M72 22 L73.2 25 L76 22 L73.2 19 Z" fill="rgba(255,255,255,0.6)" />
+            {/* Cross */}
+            <line x1="48" y1="18" x2="48" y2="76" stroke="rgba(255,255,255,0.90)" strokeWidth="3.5" strokeLinecap="round"/>
+            <line x1="24" y1="38" x2="72" y2="38" stroke="rgba(255,255,255,0.90)" strokeWidth="3.5" strokeLinecap="round"/>
+            {/* Cross glow */}
+            <line x1="48" y1="18" x2="48" y2="76" stroke="rgba(0,113,227,0.5)" strokeWidth="8" strokeLinecap="round"/>
+            <line x1="24" y1="38" x2="72" y2="38" stroke="rgba(0,113,227,0.5)" strokeWidth="8" strokeLinecap="round"/>
+            {/* Moon */}
+            <path d="M62 60 A12 12 0 1 1 62 72 A8 8 0 1 0 62 60 Z" fill="rgba(255,255,255,0.20)" />
+          </svg>
+        </div>
+
+        <div style={{ position: "relative" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.28px", marginBottom: 6 }}>꿈묵상</div>
+          <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", letterSpacing: "-0.12px", lineHeight: 1.5 }}>
+            성경 말씀으로 꿈을 돌아보는 공간
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 60px" }}>
+        <h1 style={{ fontSize: 24, fontWeight: 600, color: C.nearBlack, marginBottom: 8, letterSpacing: "-0.28px", lineHeight: 1.14 }}>
           오늘 꿈을 기록해 보세요
         </h1>
-        <p style={{ fontSize: 17, color: C.body, marginBottom: 28, lineHeight: 1.47, letterSpacing: "-0.374px" }}>
+        <p style={{ fontSize: 15, color: C.body, marginBottom: 28, lineHeight: 1.47, letterSpacing: "-0.374px" }}>
           구체적으로 기억나는 장면, 인물, 감정을 자유롭게 적어주세요
         </p>
 
