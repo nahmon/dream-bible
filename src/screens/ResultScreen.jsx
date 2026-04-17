@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { C, F, Ic } from "../lib/constants.jsx";
-import { Btn, Skeleton } from "../components/shared.jsx";
+import { Btn, Skeleton, useToast } from "../components/shared.jsx";
 
 const NAV_STYLE = {
   position: "sticky", top: 0, zIndex: 100,
@@ -27,6 +27,28 @@ export default function ResultScreen({ go, result }) {
   const { interpretation, dream_text, image_url } = result ?? {};
   const parsed = parseInterpretation(interpretation);
   const [imgLoaded, setImgLoaded] = useState(false);
+  const { showToast } = useToast();
+
+  const handleShare = async () => {
+    const clean = interpretation?.replace(/\*\*/g, "").replace(/^- /gm, "• ") ?? "";
+    const shareText = `🌙 꿈묵상 — 성경적 해석\n\n꿈: ${dream_text}\n\n${clean}\n\n성경 기반 꿈 묵상 AI → https://dream-bible.vercel.app`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "꿈묵상", text: shareText, url: "https://dream-bible.vercel.app" }); }
+      catch (_) {}
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      showToast("클립보드에 복사됐습니다", "success");
+    }
+  };
+
+  const handleSaveImage = () => {
+    if (!image_url) return;
+    const a = document.createElement("a");
+    a.href = image_url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.gray, fontFamily: F }}>
@@ -109,9 +131,28 @@ export default function ResultScreen({ go, result }) {
           </div>
         </div>
 
-        {/* Action */}
-        <Btn variant="primary" size="lg" full onClick={() => go("dream")}>
-          <Ic.Moon s={16} c="#fff" />
+        {/* Share buttons */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+          <Btn variant="primary" size="lg" full onClick={handleShare}>
+            <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
+              <line x1="4.4" y1="7.2" x2="10.6" y2="3.8"/><line x1="4.4" y1="8.8" x2="10.6" y2="12.2"/>
+            </svg>
+            친구에게 공유
+          </Btn>
+          {image_url && (
+            <Btn variant="ghost" size="lg" full onClick={handleSaveImage}>
+              <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke={C.nearBlack} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/>
+              </svg>
+              이미지 저장
+            </Btn>
+          )}
+        </div>
+
+        {/* New dream */}
+        <Btn variant="ghost" size="md" full onClick={() => go("dream")}>
+          <Ic.Moon s={15} c={C.nearBlack} />
           새 꿈 기록하기
         </Btn>
 
