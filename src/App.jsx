@@ -7,7 +7,7 @@ import DreamScreen from "./screens/DreamScreen.jsx";
 import ResultScreen from "./screens/ResultScreen.jsx";
 
 export default function App() {
-  const [screen, setScreen] = useState("landing");
+  const [screen, setScreen] = useState("dream");
   const [result, setResult] = useState(null);
 
   const go = (s, data) => {
