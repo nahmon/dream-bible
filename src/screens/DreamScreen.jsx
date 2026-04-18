@@ -3,9 +3,9 @@ import { C, F, Ic } from "../lib/constants.jsx";
 import { Btn, useToast } from "../components/shared.jsx";
 
 const EXAMPLES = [
-  "하늘을 날고 있었는데 구름 사이로 빛이 비쳤어요",
-  "맑은 강물을 건너가는 꿈을 꿨습니다",
-  "흰 양 떼가 초원에서 노는 꿈이었어요",
+  "I was flying through the sky when rays of light broke through the clouds",
+  "I dreamed I was crossing a wide, crystal-clear river toward the other side",
+  "A flock of white sheep were grazing peacefully in a sunlit meadow",
 ];
 
 const NAV_STYLE = {
@@ -25,7 +25,7 @@ export default function DreamScreen({ go }) {
 
   const handleSubmit = async () => {
     if (dream.trim().length < 10) {
-      showToast("꿈 내용을 10자 이상 입력해 주세요", "error");
+      showToast("Please describe your dream in a bit more detail", "error");
       return;
     }
 
@@ -39,13 +39,13 @@ export default function DreamScreen({ go }) {
       const data = await res.json();
 
       if (!res.ok) {
-        showToast(data.error || "오류가 발생했습니다", "error");
+        showToast(data.error || "Something went wrong. Please try again.", "error");
         return;
       }
 
       go("result", { interpretation: data.interpretation, dream_text: dream, image_url: data.image_url });
     } catch (err) {
-      showToast("네트워크 오류가 발생했습니다", "error");
+      showToast("Network error. Please check your connection.", "error");
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export default function DreamScreen({ go }) {
       <nav style={NAV_STYLE}>
         <button onClick={() => go("landing")} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           <Ic.Cross s={14} c="rgba(255,255,255,0.85)" />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>꿈묵상</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>Dream Bible</span>
         </button>
       </nav>
 
@@ -72,10 +72,8 @@ export default function DreamScreen({ go }) {
         {/* SVG illustration */}
         <div style={{ position: "relative", display: "inline-block", marginBottom: 16 }}>
           <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-            {/* Outer glow ring */}
             <circle cx="48" cy="52" r="34" fill="rgba(0,113,227,0.08)" />
             <circle cx="48" cy="52" r="24" fill="rgba(0,113,227,0.10)" />
-            {/* Stars */}
             <circle cx="14" cy="18" r="1.4" fill="rgba(255,255,255,0.55)" />
             <circle cx="78" cy="14" r="1.0" fill="rgba(255,255,255,0.40)" />
             <circle cx="82" cy="36" r="1.6" fill="rgba(255,255,255,0.50)" />
@@ -83,33 +81,29 @@ export default function DreamScreen({ go }) {
             <circle cx="88" cy="58" r="1.2" fill="rgba(255,255,255,0.45)" />
             <circle cx="20" cy="76" r="1.0" fill="rgba(255,255,255,0.30)" />
             <circle cx="74" cy="80" r="1.4" fill="rgba(255,255,255,0.35)" />
-            {/* Sparkle top-right */}
             <path d="M72 22 L73.2 25 L76 22 L73.2 19 Z" fill="rgba(255,255,255,0.6)" />
-            {/* Cross */}
             <line x1="48" y1="18" x2="48" y2="76" stroke="rgba(255,255,255,0.90)" strokeWidth="3.5" strokeLinecap="round"/>
             <line x1="24" y1="38" x2="72" y2="38" stroke="rgba(255,255,255,0.90)" strokeWidth="3.5" strokeLinecap="round"/>
-            {/* Cross glow */}
             <line x1="48" y1="18" x2="48" y2="76" stroke="rgba(0,113,227,0.5)" strokeWidth="8" strokeLinecap="round"/>
             <line x1="24" y1="38" x2="72" y2="38" stroke="rgba(0,113,227,0.5)" strokeWidth="8" strokeLinecap="round"/>
-            {/* Moon */}
             <path d="M62 60 A12 12 0 1 1 62 72 A8 8 0 1 0 62 60 Z" fill="rgba(255,255,255,0.20)" />
           </svg>
         </div>
 
         <div style={{ position: "relative" }}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.28px", marginBottom: 6 }}>꿈묵상</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.28px", marginBottom: 6 }}>Dream Bible</div>
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", letterSpacing: "-0.12px", lineHeight: 1.5 }}>
-            성경 말씀으로 꿈을 돌아보는 공간
+            Reflect on your dreams through Scripture
           </div>
         </div>
       </div>
 
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 60px" }}>
         <h1 style={{ fontSize: 24, fontWeight: 600, color: C.nearBlack, marginBottom: 8, letterSpacing: "-0.28px", lineHeight: 1.14 }}>
-          오늘 꿈을 기록해 보세요
+          Describe your dream
         </h1>
         <p style={{ fontSize: 15, color: C.body, marginBottom: 28, lineHeight: 1.47, letterSpacing: "-0.374px" }}>
-          구체적으로 기억나는 장면, 인물, 감정을 자유롭게 적어주세요
+          Write down the scenes, people, and feelings you remember — as much detail as you can.
         </p>
 
         {/* Textarea */}
@@ -117,7 +111,7 @@ export default function DreamScreen({ go }) {
           <textarea
             value={dream}
             onChange={e => setDream(e.target.value)}
-            placeholder="예: 맑은 강가를 걷고 있는데 빛나는 새 한 마리가 내 앞에 날아와 앉았습니다..."
+            placeholder="e.g. I was walking along a riverbank at dawn when a glowing bird landed right in front of me..."
             rows={7}
             style={{
               width: "100%", padding: "14px 16px", borderRadius: 8,
@@ -130,13 +124,13 @@ export default function DreamScreen({ go }) {
             onFocus={e => { e.target.style.border = `1.5px solid ${C.blue}`; e.target.style.outline = `3px solid rgba(0,113,227,0.12)`; }}
             onBlur={e => { e.target.style.border = `1px solid ${dream.length > 0 ? C.blue : C.border}`; e.target.style.outline = "none"; }}
           />
-          <div style={{ fontSize: 12, color: C.body, marginTop: 4, textAlign: "right", letterSpacing: "-0.12px" }}>{dream.length}자</div>
+          <div style={{ fontSize: 12, color: C.body, marginTop: 4, textAlign: "right", letterSpacing: "-0.12px" }}>{dream.length} chars</div>
         </div>
 
         {/* Example prompts */}
         {!dream && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 13, color: C.body, marginBottom: 10, letterSpacing: "-0.224px" }}>예시로 시작해 보세요</div>
+            <div style={{ fontSize: 13, color: C.body, marginBottom: 10, letterSpacing: "-0.224px" }}>Try an example</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {EXAMPLES.map((ex, i) => (
                 <button key={i} onClick={() => setDream(ex)}
@@ -155,19 +149,19 @@ export default function DreamScreen({ go }) {
           {loading ? (
             <>
               <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-              성경으로 묵상 중...
+              Searching Scripture...
             </>
           ) : (
             <>
               <Ic.Sparkle s={16} c="#fff" />
-              꿈 해석 받기
+              Get Biblical Interpretation
             </>
           )}
         </Btn>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
         <div style={{ marginTop: 20, fontSize: 12, color: "rgba(0,0,0,0.36)", lineHeight: 1.47, letterSpacing: "-0.12px", textAlign: "center" }}>
-          이 서비스는 예언이나 점술이 아닌 성경적 묵상 가이드입니다.
+          This is a biblical reflection guide — not prophecy or divination.
         </div>
       </div>
     </div>

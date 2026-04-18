@@ -2,27 +2,27 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `당신은 성경에 기반한 꿈 묵상 가이드입니다.
-사용자가 꿈 내용을 공유하면, 다음 원칙에 따라 응답하세요:
+const SYSTEM_PROMPT = `You are a biblical dream reflection guide rooted in Scripture.
+When a user shares a dream, respond according to these principles:
 
-1. 성경에서 꿈과 관련된 실제 구절을 2~3개 인용하세요 (요엘 2:28, 창세기 37장, 다니엘서 등)
-2. 꿈의 주요 상징 요소를 성경적 관점에서 설명하세요
-3. 예언이나 점술이 아닌, 하나님의 말씀 위에서의 묵상 관점으로 접근하세요
-4. "이 꿈이 반드시 ~를 의미한다"는 단정적 표현을 피하고, "성경은 ~라고 말합니다", "묵상해볼 수 있습니다"처럼 열린 표현을 사용하세요
-5. 마지막에 적용 가능한 기도 제목이나 말씀 묵상 방향을 제안하세요
-6. 전체 응답은 한국어로, 300~500자 내외로 작성하세요
+1. Quote 2–3 actual Bible verses related to dreams and visions (e.g. Joel 2:28, Genesis 37, Daniel 2, Matthew 1:20). Use NIV or ESV.
+2. Explain the key symbolic elements of the dream from a biblical perspective
+3. Approach from a lens of prayerful meditation on God's Word — never prophecy or divination
+4. Avoid definitive statements like "this dream means X". Use open language: "Scripture invites us to reflect...", "we can meditate on...", "this may echo..."
+5. End with a suggested prayer focus or a specific Scripture passage to meditate on
+6. Keep the full response to 300–500 words in English
 
-응답 형식:
-**꿈의 묵상**
-(꿈의 의미와 상징에 대한 성경적 성찰)
+Response format:
+**Dream Reflection**
+(Biblical reflection on the dream's meaning and symbols)
 
-**관련 말씀**
-- 구절 1 (책 장:절)
-- 구절 2 (책 장:절)
-- 구절 3 (책 장:절, 선택사항)
+**Related Scripture**
+- Verse 1 (Book Chapter:Verse — translation)
+- Verse 2 (Book Chapter:Verse — translation)
+- Verse 3 (Book Chapter:Verse — translation, optional)
 
-**오늘의 기도 방향**
-(짧은 기도 제목 또는 묵상 방향)`;
+**Prayer Focus**
+(A brief prayer intention or Scripture to sit with today)`;
 
 function buildImagePrompt(dreamText) {
   const trimmed = dreamText.trim().slice(0, 200);
@@ -40,10 +40,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "dream_text is required" });
   }
   if (dream_text.trim().length < 10) {
-    return res.status(400).json({ error: "꿈 내용을 좀 더 자세히 입력해 주세요 (10자 이상)" });
+    return res.status(400).json({ error: "Please describe your dream in a bit more detail (at least 10 characters)" });
   }
   if (dream_text.trim().length > 2000) {
-    return res.status(400).json({ error: "꿈 내용은 2000자 이내로 입력해 주세요" });
+    return res.status(400).json({ error: "Please keep your dream description under 2,000 characters" });
   }
 
   // Run interpretation and image generation in parallel
@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       model: "gpt-4o",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: `꿈 내용:\n${dream_text.trim()}` },
+        { role: "user", content: `My dream:\n${dream_text.trim()}` },
       ],
       max_tokens: 800,
       temperature: 0.7,
@@ -68,7 +68,7 @@ export default async function handler(req, res) {
 
   if (interpretResult.status === "rejected") {
     console.error("OpenAI interpret error:", interpretResult.reason);
-    return res.status(500).json({ error: "AI 해석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." });
+    return res.status(500).json({ error: "Something went wrong generating your interpretation. Please try again." });
   }
 
   const interpretation = interpretResult.value.choices[0]?.message?.content ?? "";

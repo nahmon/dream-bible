@@ -2,9 +2,9 @@ import { C, F, S, Ic } from "../lib/constants.jsx";
 import { Btn } from "../components/shared.jsx";
 
 const FEATURES = [
-  { icon: <Ic.Book s={22} c={C.blue} />, title: "성경 말씀 기반", desc: "요셉, 다니엘 등 성경의 꿈 사례와 구절로 해석합니다" },
-  { icon: <Ic.Moon s={22} c={C.blue} />, title: "AI 묵상 가이드", desc: "꿈을 분석하고 기도 방향과 말씀 묵상을 제안합니다" },
-  { icon: <Ic.Sparkle s={22} c={C.blue} />, title: "성경적 이미지 생성", desc: "꿈의 분위기를 담은 성화 스타일 이미지를 함께 드립니다" },
+  { icon: <Ic.Book s={22} c={C.blue} />, title: "Scripture-Based", desc: "Interpreted through the lens of Joseph, Daniel, and real biblical dream passages" },
+  { icon: <Ic.Moon s={22} c={C.blue} />, title: "AI Reflection Guide", desc: "Analyzes your dream and suggests a prayer focus and Scripture to meditate on" },
+  { icon: <Ic.Sparkle s={22} c={C.blue} />, title: "Biblical Dream Art", desc: "Receive a stunning illuminated-manuscript illustration inspired by your dream" },
 ];
 
 export default function LandingScreen({ go }) {
@@ -22,9 +22,9 @@ export default function LandingScreen({ go }) {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
           <Ic.Cross s={15} c="rgba(255,255,255,0.85)" />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>꿈묵상</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>Dream Bible</span>
         </div>
-        <Btn size="sm" variant="primary" onClick={() => go("dream")}>꿈 기록하기</Btn>
+        <Btn size="sm" variant="primary" onClick={() => go("dream")}>Try It Free</Btn>
       </nav>
 
       {/* Hero — Dark */}
@@ -36,7 +36,7 @@ export default function LandingScreen({ go }) {
             padding: "5px 14px", fontSize: 12, color: "rgba(255,255,255,0.6)",
             fontWeight: 400, marginBottom: 28, letterSpacing: "-0.12px",
           }}>
-            성경 기반 꿈 묵상 AI
+            AI-Powered Biblical Dream Interpretation
           </div>
 
           <h1 style={{
@@ -44,27 +44,27 @@ export default function LandingScreen({ go }) {
             color: "#ffffff", lineHeight: 1.07,
             marginBottom: 20, letterSpacing: "-0.28px",
           }}>
-            꿈을 기록하면<br />
-            말씀으로<br />
-            묵상합니다
+            Record your dream.<br />
+            Reflect through<br />
+            Scripture.
           </h1>
 
           <p style={{
             fontSize: 21, color: "rgba(255,255,255,0.64)",
-            lineHeight: 1.47, marginBottom: 40,
+            lineHeight: 1.47,
             fontWeight: 400, letterSpacing: "-0.374px",
             maxWidth: 480, margin: "0 auto 40px",
           }}>
-            예언이 아닌 묵상입니다.<br />
-            하나님의 말씀 위에서 꿈을 함께 돌아봅니다.
+            Not prophecy — reflection.<br />
+            Explore what God's Word says about your dreams.
           </p>
 
           <Btn size="lg" variant="primary" onClick={() => go("dream")}>
             <Ic.Moon s={16} c="#fff" />
-            무료로 시작하기
+            Start for Free
           </Btn>
           <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 18, letterSpacing: "-0.224px" }}>
-            로그인 없이 바로 사용 · 무료
+            No sign-in required · Free
           </div>
         </div>
       </div>
@@ -78,7 +78,7 @@ export default function LandingScreen({ go }) {
             textAlign: "center", marginBottom: 52,
             letterSpacing: "-0.28px",
           }}>
-            성경으로 읽는<br />당신의 꿈
+            Your dreams,<br />through Scripture
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -105,7 +105,7 @@ export default function LandingScreen({ go }) {
 
           <div style={{ textAlign: "center", marginTop: 52 }}>
             <Btn size="lg" variant="primary" onClick={() => go("dream")}>
-              지금 꿈 기록하기
+              Interpret Your Dream
             </Btn>
           </div>
         </div>
@@ -115,10 +115,10 @@ export default function LandingScreen({ go }) {
       <div style={{ background: "#000000", padding: "32px 24px", textAlign: "center" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 10 }}>
           <Ic.Cross s={13} c="rgba(255,255,255,0.4)" />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>꿈묵상</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.4)" }}>Dream Bible</span>
         </div>
         <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: "-0.12px" }}>
-          © 2026 꿈묵상 · 이 서비스는 점술이나 예언이 아닌 성경적 묵상 가이드입니다
+          © 2026 Dream Bible · A biblical reflection guide — not prophecy or divination
         </span>
       </div>
     </div>
