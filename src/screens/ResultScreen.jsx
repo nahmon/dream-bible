@@ -1,15 +1,11 @@
 import { useState } from "react";
-import { C, F, Ic } from "../lib/constants.jsx";
-import { Btn, useToast } from "../components/shared.jsx";
+import { useToast } from "../components/shared.jsx";
 
-const NAV_STYLE = {
-  position: "sticky", top: 0, zIndex: 100,
-  height: 48,
-  background: "rgba(0,0,0,0.8)",
-  backdropFilter: "saturate(180%) blur(20px)",
-  WebkitBackdropFilter: "saturate(180%) blur(20px)",
-  display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "0 24px",
+const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
+const T = {
+  brand: "#6B3F1D", brand2: "#8A5A30",
+  g50: "#F9FAFB", g100: "#F2F4F6", g200: "#E5E8EB",
+  g400: "#B0B8C1", g500: "#8B95A1", g600: "#6B7684", g700: "#4E5968", g900: "#191F28",
 };
 
 function parseInterpretation(text) {
@@ -23,7 +19,7 @@ function parseInterpretation(text) {
   });
 }
 
-export default function ResultScreen({ go, result }) {
+export default function ResultScreen({ result, onClose }) {
   const { interpretation, dream_text, image_url } = result ?? {};
   const parsed = parseInterpretation(interpretation);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -31,134 +27,136 @@ export default function ResultScreen({ go, result }) {
 
   const handleShare = async () => {
     const clean = interpretation?.replace(/\*\*/g, "").replace(/^- /gm, "• ") ?? "";
-    const shareText = `🌙 Dream Bible — Biblical Interpretation\n\nMy dream: ${dream_text}\n\n${clean}\n\nAI-powered biblical dream interpretation → https://dream-bible.vercel.app`;
+    const shareText = `드림바이블 — 성경적 꿈 해석\n\n내 꿈: ${dream_text}\n\n${clean}\n\nhttps://dream-bible.vercel.app`;
     if (navigator.share) {
-      try { await navigator.share({ title: "Dream Bible", text: shareText, url: "https://dream-bible.vercel.app" }); }
+      try { await navigator.share({ title: "드림바이블", text: shareText, url: "https://dream-bible.vercel.app" }); }
       catch (_) {}
     } else {
       await navigator.clipboard.writeText(shareText);
-      showToast("Copied to clipboard", "success");
+      showToast("클립보드에 복사됐어요", "success");
     }
   };
 
-  const handleSaveImage = () => {
-    if (!image_url) return;
-    const a = document.createElement("a");
-    a.href = image_url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
-  };
-
   return (
-    <div style={{ minHeight: "100vh", background: C.gray, fontFamily: F }}>
-      {/* Glass Nav */}
-      <nav style={NAV_STYLE}>
-        <button onClick={() => go("dream")} style={{ display: "flex", alignItems: "center", gap: 6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-          <Ic.Cross s={14} c="rgba(255,255,255,0.85)" />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "#fff", letterSpacing: "-0.2px" }}>Dream Bible</span>
-        </button>
-        <Btn size="sm" variant="primary" onClick={() => go("dream")}>New Dream</Btn>
-      </nav>
+    <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(25,31,40,.55)", backdropFilter: "blur(2px)" }} onClick={onClose}>
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          position: "absolute", bottom: 0, left: 0, right: 0,
+          background: "#fff", borderRadius: "20px 20px 0 0",
+          maxHeight: "92vh", display: "flex", flexDirection: "column",
+          boxShadow: "0 -8px 40px rgba(25,31,40,.18)",
+        }}
+      >
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "36px 24px 60px" }}>
-
-        {/* Biblical Image */}
-        <div style={{ marginBottom: 20, borderRadius: 16, overflow: "hidden", boxShadow: "rgba(0,0,0,0.18) 0px 4px 24px 0px", background: "#1a1a1a", aspectRatio: "1 / 1", position: "relative" }}>
-          {!imgLoaded && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
-              <span style={{ display: "inline-block", width: 24, height: 24, border: "2px solid rgba(255,255,255,0.15)", borderTopColor: "rgba(255,255,255,0.5)", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
-              <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)", letterSpacing: "-0.12px" }}>Generating biblical artwork...</span>
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-            </div>
-          )}
-          {image_url && (
-            <img
-              src={image_url}
-              alt="Biblical dream illustration"
-              onLoad={() => setImgLoaded(true)}
-              style={{
-                width: "100%", height: "100%", objectFit: "cover",
-                display: "block",
-                opacity: imgLoaded ? 1 : 0,
-                transition: "opacity 0.5s ease",
-              }}
-            />
-          )}
-          {!image_url && (
-            <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Ic.Cross s={40} c="rgba(255,255,255,0.15)" />
-            </div>
-          )}
+        {/* Handle */}
+        <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: T.g200 }} />
         </div>
 
-        {/* Dream text recap */}
-        <div style={{ background: C.white, borderRadius: 12, padding: "16px 20px", marginBottom: 14, boxShadow: "rgba(0,0,0,0.06) 0px 1px 8px 0px" }}>
-          <div style={{ fontSize: 12, color: C.body, marginBottom: 6, fontWeight: 500, letterSpacing: "-0.12px" }}>Your Dream</div>
-          <p style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.6, letterSpacing: "-0.224px" }}>{dream_text}</p>
-        </div>
-
-        {/* Interpretation */}
-        <div style={{ background: C.white, borderRadius: 12, padding: "24px", marginBottom: 20, boxShadow: "rgba(0,0,0,0.06) 0px 1px 8px 0px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-            <div style={{ width: 30, height: 30, background: C.goldBg, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Ic.Sparkle s={15} c={C.blue} />
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: C.nearBlack, letterSpacing: "-0.224px" }}>Biblical Reflection</div>
-          </div>
-
-          <div style={{ lineHeight: 1.8 }}>
-            {parsed.map(block => {
-              if (block.type === "heading") return (
-                <div key={block.key} style={{ fontSize: 14, fontWeight: 600, color: C.nearBlack, marginTop: 20, marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${C.border}`, letterSpacing: "-0.224px" }}>
-                  {block.text}
-                </div>
-              );
-              if (block.type === "bullet") return (
-                <div key={block.key} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "flex-start" }}>
-                  <span style={{ color: C.blue, fontSize: 16, flexShrink: 0, marginTop: 1 }}>›</span>
-                  <span style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.65, letterSpacing: "-0.224px" }}>{block.text}</span>
-                </div>
-              );
-              if (block.type === "spacer") return <div key={block.key} style={{ height: 8 }} />;
-              return (
-                <p key={block.key} style={{ fontSize: 15, color: C.nearBlack, lineHeight: 1.75, marginBottom: 4, letterSpacing: "-0.224px" }}>
-                  {block.text}
-                </p>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Share buttons */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-          <Btn variant="primary" size="lg" full onClick={handleShare}>
-            <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="3" r="1.5"/><circle cx="3" cy="8" r="1.5"/><circle cx="12" cy="13" r="1.5"/>
-              <line x1="4.4" y1="7.2" x2="10.6" y2="3.8"/><line x1="4.4" y1="8.8" x2="10.6" y2="12.2"/>
+        {/* Nav bar */}
+        <div style={{ display: "grid", gridTemplateColumns: "56px 1fr 56px", alignItems: "center", height: 44, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: T.g900 }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width={24} height={24}>
+              <path d="M18 6 L6 18 M6 6 L18 18" />
             </svg>
-            Share with a Friend
-          </Btn>
-          {image_url && (
-            <Btn variant="ghost" size="lg" full onClick={handleSaveImage}>
-              <svg width={16} height={16} viewBox="0 0 16 16" fill="none" stroke={C.nearBlack} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M8 2v8M5 7l3 3 3-3"/><rect x="2" y="11" width="12" height="3" rx="1"/>
-              </svg>
-              Save Image
-            </Btn>
-          )}
+          </button>
+          <div style={{ textAlign: "center", fontFamily: SANS, fontSize: 16, fontWeight: 600, color: T.g900, letterSpacing: "-.01em", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span style={{ width: 18, height: 18, borderRadius: 4, background: T.brand, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <svg viewBox="0 0 22 22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" width={11} height={11}><path d="M11 4 V18 M5 8 H17" /></svg>
+            </span>
+            <span>말씀 풀이</span>
+          </div>
+          <button onClick={handleShare} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: T.g700, marginLeft: "auto" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={20} height={20}>
+              <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
+              <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
+            </svg>
+          </button>
         </div>
 
-        {/* New dream */}
-        <Btn variant="ghost" size="md" full onClick={() => go("dream")}>
-          <Ic.Moon s={15} c={C.nearBlack} />
-          Interpret Another Dream
-        </Btn>
+        {/* Scrollable content */}
+        <div style={{ overflowY: "auto", flex: 1, scrollbarWidth: "none", padding: "0 20px 40px" }}>
 
-        {/* Disclaimer */}
-        <div style={{ marginTop: 20, fontSize: 12, color: "rgba(0,0,0,0.36)", textAlign: "center", lineHeight: 1.47, letterSpacing: "-0.12px" }}>
-          This reflection is a biblical meditation guide — not prophecy.<br />
-          For spiritual decisions, seek guidance from your pastor or faith community.
+          {/* Biblical image */}
+          {(image_url || true) && (
+            <div style={{ marginBottom: 20, borderRadius: 14, overflow: "hidden", aspectRatio: "1/1", position: "relative", background: "#2a221a" }}>
+              {!imgLoaded && (
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <span style={{ display: "inline-block", width: 20, height: 20, border: "2px solid rgba(255,255,255,.1)", borderTopColor: "rgba(255,255,255,.4)", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,.3)", letterSpacing: ".08em", fontFamily: SANS }}>성경 일러스트 생성 중…</span>
+                </div>
+              )}
+              {image_url ? (
+                <img
+                  src={image_url}
+                  alt="성경 꿈 일러스트"
+                  onLoad={() => setImgLoaded(true)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.6s ease" }}
+                />
+              ) : (
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <svg viewBox="0 0 26 26" fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="1.2" strokeLinecap="round" width={48} height={48}>
+                    <circle cx="13" cy="13" r="11" strokeDasharray="2 2.5" />
+                    <path d="M13 5 V21 M8 10 H18" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Dream recap */}
+          <div style={{ background: T.g50, border: `1px solid ${T.g100}`, borderRadius: 12, padding: "14px 16px", marginBottom: 16 }}>
+            <div style={{ fontSize: 10.5, letterSpacing: ".08em", color: T.g500, fontWeight: 700, marginBottom: 6, fontFamily: SANS }}>내 꿈</div>
+            <p style={{ fontSize: 14, color: T.g700, lineHeight: 1.6, margin: 0, fontFamily: SANS }}>{dream_text}</p>
+          </div>
+
+          {/* Interpretation */}
+          <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, padding: "20px 20px" }}>
+            <div style={{ fontSize: 10.5, letterSpacing: ".08em", color: T.brand, fontWeight: 700, marginBottom: 16, paddingBottom: 12, borderBottom: `1px solid ${T.g100}`, fontFamily: SANS }}>
+              말씀 묵상
+            </div>
+            <div>
+              {parsed.map(block => {
+                if (block.type === "heading") return (
+                  <div key={block.key} style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", color: T.brand, marginTop: 20, marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${T.g100}`, fontFamily: SANS }}>
+                    {block.text}
+                  </div>
+                );
+                if (block.type === "bullet") return (
+                  <div key={block.key} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "flex-start" }}>
+                    <span style={{ flexShrink: 0, marginTop: 7, width: 4, height: 4, borderRadius: "50%", background: T.brand, display: "inline-block" }} />
+                    <span style={{ fontSize: 14.5, color: T.g700, lineHeight: 1.65, fontFamily: SANS }}>{block.text}</span>
+                  </div>
+                );
+                if (block.type === "spacer") return <div key={block.key} style={{ height: 6 }} />;
+                return (
+                  <p key={block.key} style={{ fontSize: 14.5, color: T.g700, lineHeight: 1.7, margin: "0 0 8px", fontFamily: SANS }}>
+                    {block.text}
+                  </p>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            <button onClick={handleShare} style={{ flex: 1, background: T.brand, color: "#fff", border: 0, borderRadius: 12, padding: "14px 20px", fontFamily: SANS, fontSize: 15, fontWeight: 700, letterSpacing: "-.01em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
+                <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
+                <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
+              </svg>
+              친구에게 공유하기
+            </button>
+            <button onClick={onClose} style={{ background: "transparent", border: `1px solid ${T.g200}`, borderRadius: 12, padding: "14px 16px", fontFamily: SANS, fontSize: 14, fontWeight: 600, color: T.g600, cursor: "pointer" }}>
+              닫기
+            </button>
+          </div>
+
+          <p style={{ textAlign: "center", margin: "14px 0 0", fontSize: 11, color: T.g400, letterSpacing: ".04em", fontFamily: SANS }}>
+            예언이 아니에요 · 말씀으로 함께 돌아보는 길잡이예요
+          </p>
         </div>
       </div>
     </div>
