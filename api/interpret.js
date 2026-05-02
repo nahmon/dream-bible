@@ -67,8 +67,7 @@ export default async function handler(req, res) {
 
   const textPromise = genai.models.generateContent({
     model: "gemini-2.0-flash",
-    config: { systemInstruction: SYSTEM_PROMPT },
-    contents: `제 꿈:\n${dream_text.trim()}`,
+    contents: `${SYSTEM_PROMPT}\n\n제 꿈:\n${dream_text.trim()}`,
   });
 
   const imagePromise = skip_image
