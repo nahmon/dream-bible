@@ -66,7 +66,7 @@ export default async function handler(req, res) {
   }
 
   const textPromise = genai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-1.5-flash",
     contents: `${SYSTEM_PROMPT}\n\n제 꿈:\n${dream_text.trim()}`,
   });
 
@@ -77,9 +77,8 @@ export default async function handler(req, res) {
   const [interpretResult, imageResult] = await Promise.allSettled([textPromise, imagePromise]);
 
   if (interpretResult.status === "rejected") {
-    const err = interpretResult.reason;
-    console.error("Gemini interpret error:", err?.message ?? String(err), err?.status, err?.statusText);
-    return res.status(500).json({ error: err?.message ?? "해석을 생성하는 중 오류가 발생했습니다." });
+    console.error("Gemini interpret error:", interpretResult.reason?.message ?? interpretResult.reason);
+    return res.status(500).json({ error: "해석을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요." });
   }
 
   const interpretation = interpretResult.value.text ?? "";
