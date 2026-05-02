@@ -1,7 +1,5 @@
-import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `당신은 성경에 뿌리를 둔 꿈 묵상 안내자입니다.
@@ -67,14 +65,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "꿈 설명은 2,000자 이내로 작성해주세요." });
   }
 
-  const textPromise = openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: SYSTEM_PROMPT },
-      { role: "user", content: `제 꿈:\n${dream_text.trim()}` },
-    ],
-    max_tokens: 900,
-    temperature: 0.7,
+  const textPromise = genai.models.generateContent({
+    model: "gemini-2.0-flash",
+    config: { systemInstruction: SYSTEM_PROMPT },
+    contents: `제 꿈:\n${dream_text.trim()}`,
   });
 
   const imagePromise = skip_image
@@ -84,11 +78,11 @@ export default async function handler(req, res) {
   const [interpretResult, imageResult] = await Promise.allSettled([textPromise, imagePromise]);
 
   if (interpretResult.status === "rejected") {
-    console.error("OpenAI interpret error:", interpretResult.reason);
+    console.error("Gemini interpret error:", interpretResult.reason);
     return res.status(500).json({ error: "해석을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요." });
   }
 
-  const interpretation = interpretResult.value.choices[0]?.message?.content ?? "";
+  const interpretation = interpretResult.value.text ?? "";
   const image_url = imageResult.status === "fulfilled" ? imageResult.value : null;
 
   if (imageResult.status === "rejected") {
