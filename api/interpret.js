@@ -77,8 +77,9 @@ export default async function handler(req, res) {
   const [interpretResult, imageResult] = await Promise.allSettled([textPromise, imagePromise]);
 
   if (interpretResult.status === "rejected") {
-    console.error("Gemini interpret error:", interpretResult.reason);
-    return res.status(500).json({ error: "해석을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요." });
+    const err = interpretResult.reason;
+    console.error("Gemini interpret error:", err?.message ?? String(err), err?.status, err?.statusText);
+    return res.status(500).json({ error: err?.message ?? "해석을 생성하는 중 오류가 발생했습니다." });
   }
 
   const interpretation = interpretResult.value.text ?? "";
