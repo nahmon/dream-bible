@@ -55,7 +55,7 @@ export default function ResultScreen({ result, onClose }) {
     if (!isPaid && !freeImageAvailable) return;
     if (paidCapReached) return;
     generateCalledRef.current = true;
-    fetch("https://dream-bible.vercel.app/api/generate-image", {
+    fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ dream_text }),

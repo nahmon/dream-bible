@@ -94,7 +94,7 @@ export default function App() {
       return;
     }
     const userId = getUserId();
-    fetch("https://dream-bible.vercel.app/api/check-subscription", {
+    fetch("/api/check-subscription", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),

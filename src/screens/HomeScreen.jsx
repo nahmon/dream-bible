@@ -106,7 +106,7 @@ function UpgradeModal({ onClose, onSuccess, userId }) {
     setLoading(true);
     if (IS_EN) {
       try {
-        const res = await fetch("https://dream-bible.vercel.app/api/stripe-checkout", {
+        const res = await fetch("/api/stripe-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
@@ -251,9 +251,7 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
     try {
       const isCounsel = mode === "counsel";
       const lang = IS_EN ? "en" : "ko";
-      const url = isCounsel
-        ? "https://dream-bible.vercel.app/api/counsel"
-        : "https://dream-bible.vercel.app/api/interpret";
+      const url = isCounsel ? "/api/counsel" : "/api/interpret";
       const body = isCounsel
         ? { situation_text: dream, lang }
         : { dream_text: dream, skip_image: true, lang };
