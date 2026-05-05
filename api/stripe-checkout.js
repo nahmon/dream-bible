@@ -1,8 +1,6 @@
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const PRICE_ID = process.env.STRIPE_PRICE_ID; // ₩4,900/month recurring price
-const APP_URL = process.env.APP_URL || "https://dream-bible.vercel.app";
 
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -15,14 +13,20 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
+  const { userId } = req.body ?? {};
+  if (!userId) return res.status(400).json({ error: "userId required" });
+
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:5173";
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [{ price: PRICE_ID, quantity: 1 }],
-    success_url: `${APP_URL}/?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${APP_URL}/`,
-    locale: "auto",
-    metadata: { product: "dream-bible-pro" },
+    line_items: [{ price: process.env.STRIPE_PRICE_ID, quantity: 1 }],
+    success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: baseUrl,
+    client_reference_id: userId,
+    metadata: { userId },
   });
 
   return res.status(200).json({ url: session.url });

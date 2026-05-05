@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const SYSTEM_PROMPT = `당신은 성경에 뿌리를 둔 꿈 묵상 안내자입니다.
+const SYSTEM_PROMPT_KO = `당신은 성경에 뿌리를 둔 꿈 묵상 안내자입니다.
 사용자가 꿈을 나누면 다음 원칙에 따라 한국어로 응답하세요:
 
 1. 꿈과 관련된 실제 성경 구절 2–3개를 인용하세요 (예: 요엘 2:28, 창세기 37장, 다니엘 2장, 마태복음 1:20). 개역개정 또는 NIV를 사용하세요.
@@ -23,6 +23,28 @@ const SYSTEM_PROMPT = `당신은 성경에 뿌리를 둔 꿈 묵상 안내자입
 
 **기도 제목**
 (오늘 함께할 간단한 기도 의도나 성경 구절)`;
+
+const SYSTEM_PROMPT_EN = `You are a biblically-rooted dream reflection guide.
+When someone shares a dream, respond according to these principles in English:
+
+1. Cite 2–3 real Bible passages related to the dream (e.g. Joel 2:28, Genesis 37, Daniel 2, Matthew 1:20). Use NIV or ESV.
+2. Explain the key symbolic elements of the dream from a biblical perspective
+3. Approach through the lens of prayerful reflection on God's Word — not prophecy or divination
+4. Avoid definitive statements like "this dream means X." Use open language: "Scripture invites us to reflect...", "we might consider...", "perhaps..."
+5. Close with a prayer intention or a specific Bible verse to meditate on today
+6. Write the full response in 300–500 words in English
+
+Response format:
+**Dream Reflection**
+(Biblical reflection on the dream's meaning and symbols)
+
+**Related Scripture**
+- Verse 1 (Book Chapter:Verse — Translation)
+- Verse 2 (Book Chapter:Verse — Translation)
+- Verse 3 (Book Chapter:Verse — Translation, optional)
+
+**Prayer Focus**
+(A short prayer intention or Bible verse to carry with you today)`;
 
 function buildImagePrompt(dreamText) {
   const trimmed = dreamText.trim().slice(0, 200);
@@ -49,25 +71,21 @@ function setCors(res) {
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { dream_text, skip_image } = req.body ?? {};
+  const { dream_text, skip_image, lang = "ko" } = req.body ?? {};
+  const isEn = lang === "en";
 
-  if (!dream_text?.trim()) {
-    return res.status(400).json({ error: "꿈 내용을 입력해주세요." });
-  }
-  if (dream_text.trim().length < 10) {
-    return res.status(400).json({ error: "꿈을 조금 더 자세히 적어주세요 (10자 이상)." });
-  }
-  if (dream_text.trim().length > 2000) {
-    return res.status(400).json({ error: "꿈 설명은 2,000자 이내로 작성해주세요." });
-  }
+  if (!dream_text?.trim()) return res.status(400).json({ error: isEn ? "Please enter your dream." : "꿈 내용을 입력해주세요." });
+  if (dream_text.trim().length < 10) return res.status(400).json({ error: isEn ? "Please describe your dream in more detail." : "꿈을 조금 더 자세히 적어주세요." });
+  if (dream_text.trim().length > 2000) return res.status(400).json({ error: isEn ? "Please keep your dream under 2,000 characters." : "꿈 설명은 2,000자 이내로 작성해주세요." });
+
+  const SYSTEM_PROMPT = isEn ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_KO;
+  const dreamLabel = isEn ? "My dream" : "제 꿈";
 
   const textPromise = genai.models.generateContent({
-    model: "gemini-2.0-flash-lite",
-    contents: `${SYSTEM_PROMPT}\n\n제 꿈:\n${dream_text.trim()}`,
+    model: "gemini-2.5-flash",
+    contents: `${SYSTEM_PROMPT}\n\n${dreamLabel}:\n${dream_text.trim()}`,
   });
 
   const imagePromise = skip_image
@@ -77,17 +95,12 @@ export default async function handler(req, res) {
   const [interpretResult, imageResult] = await Promise.allSettled([textPromise, imagePromise]);
 
   if (interpretResult.status === "rejected") {
-    const errMsg = interpretResult.reason?.message ?? String(interpretResult.reason);
-    console.error("Gemini interpret error:", errMsg);
-    return res.status(500).json({ _debug: errMsg, error: "해석을 생성하는 중 오류가 발생했습니다. 다시 시도해주세요." });
+    console.error("Gemini error:", interpretResult.reason?.message);
+    return res.status(500).json({ error: isEn ? "Failed to generate interpretation. Please try again." : "해석을 생성하는 중 오류가 발생했습니다." });
   }
 
-  const interpretation = interpretResult.value.text ?? "";
-  const image_url = imageResult.status === "fulfilled" ? imageResult.value : null;
-
-  if (imageResult.status === "rejected") {
-    console.warn("Image generation failed (non-fatal):", imageResult.reason?.message);
-  }
-
-  return res.status(200).json({ interpretation, image_url });
+  return res.status(200).json({
+    interpretation: interpretResult.value.text ?? "",
+    image_url: imageResult.status === "fulfilled" ? imageResult.value : null,
+  });
 }

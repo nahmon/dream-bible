@@ -3,3 +3,9 @@ dist/
 .env.local
 .env.*.local
 .vercel/
+.vercel
+.DS_Store
+.granite/
+.omc/
+granite.config.ts
+*.ait
