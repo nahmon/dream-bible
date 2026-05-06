@@ -91,7 +91,7 @@ export default function ResultScreen({ result, onClose }) {
     fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ dream_text }),
+      body: JSON.stringify(isCounsel ? { dream_text, type: "counsel" } : { dream_text }),
     })
       .then(res => res.json())
       .then(data => {
