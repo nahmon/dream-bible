@@ -7,6 +7,14 @@ import { L, IS_EN } from "../lang/index.js";
 
 const IAP_SKU = "bibledream_monthly_2500";
 
+const MUSIC_TRACKS = [
+  "https://cdn1.suno.ai/5QQOxOWbfamTaSyk.mp3",
+  "https://cdn1.suno.ai/ivHmH80ANV3fVKQz.mp3",
+  "https://cdn1.suno.ai/lbTtVLAP6HFoekE9.mp3",
+  "https://cdn1.suno.ai/YoRmzUgO5rsXsTyG.mp3",
+  "https://cdn1.suno.ai/4zeOhuBMCuYWRcYK.mp3",
+];
+
 const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
 const T = {
   brand: "#1B3A6B", brand2: "#122A4E", brandLight: "#E8EEF8",
@@ -247,6 +255,11 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       setShowUpgrade(true);
       return;
     }
+    // Create audio during user gesture — before any await so autoplay works
+    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
+    const bgAudio = new Audio(track);
+    bgAudio.volume = 0.3;
+    bgAudio.loop = true;
     setLoading(true);
     try {
       const isCounsel = mode === "counsel";
@@ -254,7 +267,7 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       const url = isCounsel ? "/api/counsel" : "/api/interpret";
       const body = isCounsel
         ? { situation_text: dream, lang }
-        : { dream_text: dream, skip_image: true, lang };
+        : { dream_text: dream, lang };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -270,7 +283,8 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       const entry = { id, date: new Date().toISOString(), dream_text: dream, interpretation: data.interpretation, image_url: null, type: isCounsel ? "counsel" : "dream" };
       const prev = JSON.parse(localStorage.getItem("db_journal") || "[]");
       localStorage.setItem("db_journal", JSON.stringify([entry, ...prev]));
-      onResult({ id, interpretation: data.interpretation, dream_text: dream, image_url: null, isPaid, mode });
+      bgAudio.play().catch(() => {});
+      onResult({ id, interpretation: data.interpretation, dream_text: dream, image_url: null, isPaid, mode, bgAudio });
     } catch {
       showToast(h.errNetwork, "error");
     } finally {

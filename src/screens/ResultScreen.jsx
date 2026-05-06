@@ -41,7 +41,7 @@ function parseInterpretation(text) {
 }
 
 export default function ResultScreen({ result, onClose }) {
-  const { id, interpretation, dream_text, image_url: initialImageUrl, isPaid, mode } = result ?? {};
+  const { id, interpretation, dream_text, image_url: initialImageUrl, isPaid, mode, bgAudio } = result ?? {};
   const isCounsel = mode === "counsel";
   const parsed = parseInterpretation(interpretation);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -51,26 +51,23 @@ export default function ResultScreen({ result, onClose }) {
   const generateCalledRef = useRef(false);
   const r = L.home.result;
 
-  const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [musicUnlocked, setMusicUnlocked] = useState(false);
+  const audioRef = useRef(bgAudio ?? null);
+  const [isPlaying, setIsPlaying] = useState(!!bgAudio);
 
   useEffect(() => {
+    if (bgAudio) {
+      setIsPlaying(true);
+      return () => { bgAudio.pause(); bgAudio.src = ""; };
+    }
+    // Fallback for journal re-open (fresh gesture available)
     const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
     const audio = new Audio(track);
     audio.volume = 0.3;
     audio.loop = true;
     audioRef.current = audio;
-    audio.play().then(() => { setIsPlaying(true); setMusicUnlocked(true); }).catch(() => {});
+    audio.play().then(() => setIsPlaying(true)).catch(() => {});
     return () => { audio.pause(); audio.src = ""; };
   }, []);
-
-  const unlockAndPlay = () => {
-    if (musicUnlocked) return;
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.play().then(() => { setIsPlaying(true); setMusicUnlocked(true); }).catch(() => {});
-  };
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -84,10 +81,10 @@ export default function ResultScreen({ result, onClose }) {
   const [paidImgCount] = useState(() => parseInt(localStorage.getItem(PAID_IMAGE_KEY()) || "0"));
   const freeImageAvailable = !isPaid && (isFirstEver || !freeMonthUsed);
   const paidCapReached = isPaid && paidImgCount >= PAID_IMAGE_CAP;
-  const showImageSection = !isCounsel && ((isPaid && !paidCapReached) || freeImageAvailable || !!initialImageUrl);
+  const showImageSection = (isPaid && !paidCapReached) || freeImageAvailable || !!initialImageUrl;
 
   useEffect(() => {
-    if (isCounsel || imageUrl || generateCalledRef.current) return;
+    if (imageUrl || generateCalledRef.current) return;
     if (!isPaid && !freeImageAvailable) return;
     if (paidCapReached) return;
     generateCalledRef.current = true;
