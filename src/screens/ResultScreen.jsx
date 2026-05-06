@@ -53,6 +53,7 @@ export default function ResultScreen({ result, onClose }) {
 
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [musicUnlocked, setMusicUnlocked] = useState(false);
 
   useEffect(() => {
     const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
@@ -60,9 +61,16 @@ export default function ResultScreen({ result, onClose }) {
     audio.volume = 0.3;
     audio.loop = true;
     audioRef.current = audio;
-    audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    audio.play().then(() => { setIsPlaying(true); setMusicUnlocked(true); }).catch(() => {});
     return () => { audio.pause(); audio.src = ""; };
   }, []);
+
+  const unlockAndPlay = () => {
+    if (musicUnlocked) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.play().then(() => { setIsPlaying(true); setMusicUnlocked(true); }).catch(() => {});
+  };
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -167,7 +175,7 @@ export default function ResultScreen({ result, onClose }) {
             <span>{r.navTitle[isCounsel ? "counsel" : "dream"]}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 4 }}>
-            <button onClick={toggleMusic} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: isPlaying ? T.brand : T.g400 }}>
+            <button onClick={musicUnlocked ? toggleMusic : unlockAndPlay} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: isPlaying ? T.brand : T.g400 }}>
               {isPlaying ? (
                 <svg viewBox="0 0 24 24" fill="currentColor" width={20} height={20}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
               ) : (
@@ -183,7 +191,7 @@ export default function ResultScreen({ result, onClose }) {
           </div>
         </div>
 
-        <div style={{ overflowY: "auto", flex: 1, scrollbarWidth: "none", padding: "4px 20px 40px" }}>
+        <div onClick={unlockAndPlay} style={{ overflowY: "auto", flex: 1, scrollbarWidth: "none", padding: "4px 20px 40px" }}>
 
           {showImageSection && (
             <div style={{ marginBottom: 20 }}>
