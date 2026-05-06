@@ -6,6 +6,7 @@ import WordScreen from "./screens/WordScreen.jsx";
 import MeScreen from "./screens/MeScreen.jsx";
 import ResultScreen from "./screens/ResultScreen.jsx";
 import { L } from "./lang/index.js";
+import { supabase, isAdmin } from "./lib/supabase.js";
 
 const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
 const T = {
@@ -46,6 +47,16 @@ const TABS = L.tabs.map((t, i) => ({ ...t, icon: TAB_ICONS[i] }));
 export default function App() {
   const [tab, setTab] = useState("home");
   const [result, setResult] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setUser(data.session?.user ?? null));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
   const [isPaid, setIsPaid] = useState(() => {
     const paidUntil = localStorage.getItem("db_paid_until");
     if (paidUntil && new Date(paidUntil) > new Date()) return true;
@@ -129,7 +140,9 @@ export default function App() {
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   };
 
-  const canInterpret = isPaid || uses < FREE_LIMIT;
+  const adminMode = isAdmin(user);
+  const effectiveIsPaid = adminMode || isPaid;
+  const canInterpret = adminMode || isPaid || uses < FREE_LIMIT;
   const activeTab = TABS.find(t => t.id === tab);
 
   return (
@@ -140,6 +153,7 @@ export default function App() {
           html, body { margin: 0; padding: 0; background: #fff; }
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0%,100%{opacity:.4;transform:scale(1);} 50%{opacity:1;transform:scale(1.2);} }
+          button:active { transform: scale(0.97); transition: transform 0.08s ease; }
         `}</style>
 
         {/* TDS mini-app nav bar */}
@@ -172,7 +186,7 @@ export default function App() {
         >
           {tab === "home" && (
             <HomeScreen
-              isPaid={isPaid}
+              isPaid={effectiveIsPaid}
               uses={uses}
               freeLimit={FREE_LIMIT}
               canInterpret={canInterpret}
@@ -180,11 +194,12 @@ export default function App() {
               onResult={openResult}
               onPurchaseSuccess={() => setIsPaid(true)}
               userId={getUserId()}
+              user={user}
             />
           )}
           {tab === "journal" && <JournalScreen onOpenResult={openResult} />}
           {tab === "word" && <WordScreen />}
-          {tab === "me" && <MeScreen isPaid={isPaid} uses={uses} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} />}
+          {tab === "me" && <MeScreen isPaid={effectiveIsPaid} uses={uses} user={user} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} />}
         </div>
 
         {/* Bottom tab bar */}

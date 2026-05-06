@@ -4,6 +4,7 @@ import { IAP } from "@apps-in-toss/web-framework";
 import { useToast } from "../components/shared.jsx";
 import BannerAd from "../components/BannerAd.jsx";
 import { L, IS_EN } from "../lang/index.js";
+import { signInWithGoogle } from "../lib/supabase.js";
 
 const IAP_SKU = "bibledream_monthly_2500";
 
@@ -22,7 +23,7 @@ const T = {
   g500: "#8B95A1", g600: "#6B7684", g700: "#4E5968", g900: "#191F28", paper: "#FFFFFF",
 };
 
-function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComment, onClose }) {
+function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComment, onClose, user }) {
   const [text, setText] = useState("");
   const [localComments, setLocalComments] = useState(initialUserComments || []);
   const [bottom, setBottom] = useState(0);
@@ -87,19 +88,26 @@ function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComm
             </div>
           ))}
         </div>
-        <div style={{ padding: `12px 16px ${bottom > 0 ? "12px" : "calc(12px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", gap: 10, alignItems: "flex-end", flexShrink: 0 }}>
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            onClick={() => textareaRef.current?.focus()}
-            placeholder={h.commentPlaceholder}
-            enterKeyHint="send"
-            rows={1}
-            style={{ flex: 1, border: `1.5px solid ${T.g200}`, borderRadius: 12, padding: "11px 14px", fontFamily: SANS, fontSize: 16, color: T.g900, outline: "none", background: T.g50, resize: "none", lineHeight: 1.5, minHeight: 44, WebkitAppearance: "none" }}
-          />
-          <button onClick={handleAdd} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700, flexShrink: 0, height: 44 }}>{h.commentSubmit}</button>
-        </div>
+        {user ? (
+          <div style={{ padding: `12px 16px ${bottom > 0 ? "12px" : "calc(12px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", gap: 10, alignItems: "flex-end", flexShrink: 0 }}>
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={e => setText(e.target.value)}
+              onClick={() => textareaRef.current?.focus()}
+              placeholder={h.commentPlaceholder}
+              enterKeyHint="send"
+              rows={1}
+              style={{ flex: 1, border: `1.5px solid ${T.g200}`, borderRadius: 12, padding: "11px 14px", fontFamily: SANS, fontSize: 16, color: T.g900, outline: "none", background: T.g50, resize: "none", lineHeight: 1.5, minHeight: 44, WebkitAppearance: "none" }}
+            />
+            <button onClick={handleAdd} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700, flexShrink: 0, height: 44 }}>{h.commentSubmit}</button>
+          </div>
+        ) : (
+          <div style={{ padding: `16px 20px ${bottom > 0 ? "16px" : "calc(16px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <p style={{ margin: 0, fontSize: 14, color: T.g500, fontFamily: SANS }}>{h.commentLoginPrompt}</p>
+            <button onClick={() => { sessionStorage.setItem("after_login_comments", idx); signInWithGoogle(); }} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "11px 24px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700 }}>{h.commentLoginBtn}</button>
+          </div>
+        )}
       </div>
     </>
   );
@@ -211,7 +219,7 @@ function UpgradeModal({ onClose, onSuccess, userId }) {
   );
 }
 
-export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUsed, onResult, onPurchaseSuccess, userId }) {
+export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUsed, onResult, onPurchaseSuccess, userId, user }) {
   const [mode, setMode] = useState("dream");
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
@@ -226,6 +234,17 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
     try { return JSON.parse(localStorage.getItem("community_comments") || "{}"); } catch { return {}; }
   });
   const [commentsOpen, setCommentsOpen] = useState(null);
+  const dreamTextareaRef = useRef(null);
+
+  // OAuth return: re-open comments sheet if user signed in during comment flow
+  useEffect(() => {
+    if (!user) return;
+    const pending = sessionStorage.getItem("after_login_comments");
+    if (pending) {
+      sessionStorage.removeItem("after_login_comments");
+      setCommentsOpen(pending);
+    }
+  }, [user]);
 
   const toggleLike = (i) => {
     setLiked(prev => {
@@ -305,6 +324,7 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
           userComments={userComments[commentsOpen]}
           onAddComment={addComment}
           onClose={() => setCommentsOpen(null)}
+          user={user}
         />,
         document.body
       )}
@@ -342,12 +362,14 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
             <span style={{ fontSize: 13, color: T.g400, fontWeight: 500, fontFamily: SANS }}>{h.charCount(dream.length)}</span>
           </div>
           <textarea
+            ref={dreamTextareaRef}
             value={dream}
             onChange={e => setDream(e.target.value)}
+            onInput={e => { const el = e.target; el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; }}
             placeholder={h.placeholder[mode]}
-            rows={5}
+            rows={3}
             maxLength={2000}
-            style={{ width: "100%", border: 0, background: "transparent", resize: "none", fontFamily: SANS, fontSize: 16, lineHeight: 1.65, color: T.g900, outline: "none", minHeight: 90, padding: 0 }}
+            style={{ width: "100%", border: 0, background: "transparent", resize: "none", fontFamily: SANS, fontSize: 16, lineHeight: 1.65, color: T.g900, outline: "none", minHeight: 80, padding: 0, overflow: "hidden" }}
           />
           <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${T.g200}`, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>
             <span style={{ display: "flex", alignItems: "center", gap: 6 }}>

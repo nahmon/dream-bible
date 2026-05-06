@@ -53,6 +53,7 @@ export default function ResultScreen({ result, onClose }) {
 
   const audioRef = useRef(bgAudio ?? null);
   const [isPlaying, setIsPlaying] = useState(!!bgAudio);
+  const musicToastShownRef = useRef(false);
 
   useEffect(() => {
     if (bgAudio) {
@@ -68,6 +69,13 @@ export default function ResultScreen({ result, onClose }) {
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
     return () => { audio.pause(); audio.src = ""; };
   }, []);
+
+  useEffect(() => {
+    if (isPlaying && !musicToastShownRef.current) {
+      musicToastShownRef.current = true;
+      showToast(r.musicPlaying, "success");
+    }
+  }, [isPlaying]);
 
   const toggleMusic = () => {
     const audio = audioRef.current;
@@ -134,7 +142,10 @@ export default function ResultScreen({ result, onClose }) {
     const title = r.shareTitle[isCounsel ? "counsel" : "dream"];
     const shareText = `${title}\n\n${label}: ${dream_text}\n\n${clean}\n\n🙏 ${r.shareBody(shareUrl)}`;
     if (navigator.share) {
-      try { await navigator.share({ title: r.shareAppTitle, text: shareText, url: shareUrl }); }
+      try {
+        await navigator.share({ title: r.shareAppTitle, text: shareText, url: shareUrl });
+        showToast(r.shareShared, "success");
+      }
       catch (_) {}
     } else {
       await navigator.clipboard.writeText(shareText);
@@ -153,7 +164,11 @@ export default function ResultScreen({ result, onClose }) {
           boxShadow: "0 -8px 48px rgba(25,31,40,.2)",
         }}
       >
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+          .img-shimmer { background: linear-gradient(90deg, #2a221a 25%, #3d3028 50%, #2a221a 75%); background-size: 200% 100%; animation: shimmer 1.6s infinite; }
+        `}</style>
 
         <div style={{ display: "flex", justifyContent: "center", padding: "14px 0 6px" }}>
           <div style={{ width: 40, height: 4, borderRadius: 2, background: T.g200 }} />
@@ -194,10 +209,7 @@ export default function ResultScreen({ result, onClose }) {
             <div style={{ marginBottom: 20 }}>
               <div style={{ borderRadius: 16, overflow: "hidden", aspectRatio: "1/1", position: "relative", background: "#2a221a" }}>
                 {!imgLoaded && !imgError && (
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12 }}>
-                    <span style={{ display: "inline-block", width: 24, height: 24, border: "2.5px solid rgba(255,255,255,.1)", borderTopColor: "rgba(255,255,255,.4)", borderRadius: "50%", animation: "spin 0.9s linear infinite" }} />
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,.35)", letterSpacing: ".06em", fontFamily: SANS }}>{r.imageLoading}</span>
-                  </div>
+                  <div className="img-shimmer" style={{ position: "absolute", inset: 0 }} />
                 )}
                 {imgError && (
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
