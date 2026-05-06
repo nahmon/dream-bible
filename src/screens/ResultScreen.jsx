@@ -10,6 +10,14 @@ const T = {
   g400: "#B0B8C1", g500: "#8B95A1", g600: "#6B7684", g700: "#4E5968", g900: "#191F28",
 };
 
+const MUSIC_TRACKS = [
+  "https://cdn1.suno.ai/5QQOxOWbfamTaSyk.mp3",
+  "https://cdn1.suno.ai/ivHmH80ANV3fVKQz.mp3",
+  "https://cdn1.suno.ai/lbTtVLAP6HFoekE9.mp3",
+  "https://cdn1.suno.ai/YoRmzUgO5rsXsTyG.mp3",
+  "https://cdn1.suno.ai/4zeOhuBMCuYWRcYK.mp3",
+];
+
 const FREE_IMAGE_KEY = () => {
   const d = new Date();
   return `db_free_image_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -42,6 +50,26 @@ export default function ResultScreen({ result, onClose }) {
   const { showToast } = useToast();
   const generateCalledRef = useRef(false);
   const r = L.home.result;
+
+  const audioRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
+    const audio = new Audio(track);
+    audio.volume = 0.3;
+    audio.loop = true;
+    audioRef.current = audio;
+    audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+    return () => { audio.pause(); audio.src = ""; };
+  }, []);
+
+  const toggleMusic = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) { audio.pause(); setIsPlaying(false); }
+    else { audio.play().then(() => setIsPlaying(true)).catch(() => {}); }
+  };
 
   const [isFirstEver] = useState(() => !localStorage.getItem("db_first_image_done"));
   const [freeMonthUsed] = useState(() => !!localStorage.getItem(FREE_IMAGE_KEY()));
@@ -126,7 +154,7 @@ export default function ResultScreen({ result, onClose }) {
           <div style={{ width: 40, height: 4, borderRadius: 2, background: T.g200 }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "56px 1fr 56px", alignItems: "center", height: 48, flexShrink: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "56px 1fr 96px", alignItems: "center", height: 48, flexShrink: 0 }}>
           <button onClick={onClose} style={{ background: "transparent", border: 0, cursor: "pointer", width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: T.g900 }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" width={22} height={22}>
               <path d="M18 6 L6 18 M6 6 L18 18" />
@@ -138,12 +166,21 @@ export default function ResultScreen({ result, onClose }) {
             </span>
             <span>{r.navTitle[isCounsel ? "counsel" : "dream"]}</span>
           </div>
-          <button onClick={handleShare} style={{ background: "transparent", border: 0, cursor: "pointer", width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: T.g700, marginLeft: "auto" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
-              <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
-              <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
-            </svg>
-          </button>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 4 }}>
+            <button onClick={toggleMusic} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: isPlaying ? T.brand : T.g400 }}>
+              {isPlaying ? (
+                <svg viewBox="0 0 24 24" fill="currentColor" width={20} height={20}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="currentColor" width={20} height={20}><path d="M8 5v14l11-7z"/></svg>
+              )}
+            </button>
+            <button onClick={handleShare} style={{ background: "transparent", border: 0, cursor: "pointer", width: 48, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: T.g700 }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={22} height={22}>
+                <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
+                <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div style={{ overflowY: "auto", flex: 1, scrollbarWidth: "none", padding: "4px 20px 40px" }}>
