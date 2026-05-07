@@ -96,7 +96,7 @@ export const en = {
         avatar: "D", who: "DawnPrayer*", when: "yesterday",
         dream: "A long white stone staircase stretched upward into soft, glowing light.",
         verseRef: "Genesis 28:12", likes: 12,
-        verseText: "Like Jacob's ladder — a sign that the Lord walks beside us on whatever path we're on.",
+        verseText: "Like Jacob's ladder — a sign that God above is present with us, reaching down to wherever we are.",
         commentList: [],
       },
     ],
