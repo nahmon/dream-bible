@@ -38,7 +38,7 @@ function exportJournal(entries) {
   URL.revokeObjectURL(url);
 }
 
-export default function MeScreen({ isPaid, uses, user, onReset }) {
+export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
   const admin = isAdmin(user);
   const m = L.home.me;
   const entries = JSON.parse(localStorage.getItem("db_journal") || "[]");
@@ -90,14 +90,27 @@ export default function MeScreen({ isPaid, uses, user, onReset }) {
           const isAuth = row.action === "auth";
           const isLink = row.action === "link";
           const isExport = row.action === "export";
-          const clickable = isAuth || isLink || isExport;
+          const isInvite = row.action === "invite";
+          const clickable = isAuth || isLink || isExport || isInvite;
           const handleClick = isAuth
             ? (user ? signOut : signInWithGoogle)
             : isLink
               ? () => window.open(row.url, "_blank")
               : isExport
                 ? () => exportJournal(entries)
-                : undefined;
+                : isInvite
+                  ? () => {
+                      const refCode = (userId || "").slice(0, 8);
+                      const url = `https://dreambible.app/?ref=${refCode}`;
+                      const msg = m.inviteMsg(url);
+                      if (navigator.share) {
+                        navigator.share({ text: msg }).catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(msg).catch(() => {});
+                        alert("클립보드에 복사됐어요!");
+                      }
+                    }
+                  : undefined;
           return (
             <div
               key={i}

@@ -165,7 +165,9 @@ export const ko = {
       statsLabels: ["기록한 꿈", "받은 풀이", "연속 기록"],
       signIn: "Google 로그인",
       signOut: "로그아웃",
+      inviteMsg: (url) => `너를 위해 항상 기도할게 💙\n꿈을 성경 말씀으로 묵상하는 앱인데, 나눠주고 싶어서.\n\n${url}`,
       settings: [
+        { ttl: "친구에게 나누기", val: "초대 링크", action: "invite" },
         { ttl: "꿈일지 내보내기", val: "텍스트 파일", action: "export" },
         { ttl: "개인정보 처리방침", val: "→", action: "link", url: "https://dreambible.app/privacy" },
         { ttl: "이용약관", val: "→", action: "link", url: "https://dreambible.app/terms" },

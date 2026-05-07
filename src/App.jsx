@@ -195,7 +195,7 @@ export default function App() {
           )}
           {tab === "journal" && <JournalScreen onOpenResult={openResult} />}
           {tab === "word" && <WordScreen />}
-          {tab === "me" && <MeScreen isPaid={effectiveIsPaid} uses={uses} user={user} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} />}
+          {tab === "me" && <MeScreen isPaid={effectiveIsPaid} uses={uses} user={user} userId={getUserId()} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} />}
         </div>
 
         {/* Bottom tab bar */}
