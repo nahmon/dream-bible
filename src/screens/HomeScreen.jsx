@@ -109,7 +109,7 @@ function UpgradeModal({ onClose, onSuccess, userId }) {
     setLoading(true);
     if (IS_EN) {
       try {
-        const res = await fetch("/api/stripe-checkout", {
+        const res = await fetch("/api/ls-checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),

@@ -86,10 +86,10 @@ export default function App() {
 
   const searchParams = new URLSearchParams(window.location.search);
   const isDevReset = searchParams.get("reset_uses") === "1";
-  const stripeSessionId = searchParams.get("session_id");
+  const isPaidRedirect = searchParams.get("paid") === "1";
 
   useEffect(() => {
-    if (stripeSessionId) {
+    if (isPaidRedirect) {
       localStorage.setItem("db_paid", "true");
       setIsPaid(true);
       window.history.replaceState({}, "", "/");
