@@ -11,9 +11,8 @@ export default async function handler(req, res) {
   const { userId } = req.body ?? {};
   if (!userId) return res.status(400).json({ error: "userId required" });
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "http://localhost:5173";
+  const baseUrl = req.headers.origin ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:5173");
 
   try {
     const session = await stripe.checkout.sessions.create({
