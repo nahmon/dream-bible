@@ -8,7 +8,8 @@
     "dev:en": "VITE_LANG=en vite",
     "build": "vite build",
     "build:en": "VITE_LANG=en vite build && mv dist/index.en.html dist/index.html",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:ait": "npx ait build && mv bibledream.ait bibledream-$(date +%Y-%m-%d).ait"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "^2.4.7",
