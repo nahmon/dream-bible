@@ -111,21 +111,27 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
                       }
                     }
                   : undefined;
-          return (
-            <div
-              key={i}
-              onClick={handleClick}
-              style={{
-                padding: "15px 18px", display: "flex", alignItems: "center",
-                justifyContent: "space-between",
-                borderTop: i > 0 ? `1px solid ${T.g100}` : "none",
-                cursor: clickable ? "pointer" : "default",
-                opacity: clickable ? 1 : 0.45,
-              }}>
+          const rowStyle = {
+            padding: "15px 18px", display: "flex", alignItems: "center",
+            justifyContent: "space-between", width: "100%",
+            borderTop: i > 0 ? `1px solid ${T.g100}` : "none",
+            opacity: clickable ? 1 : 0.45,
+          };
+          const inner = (
+            <>
               <span style={{ fontSize: 14.5, color: isAuth ? T.brand : T.g900, fontWeight: isAuth ? 600 : 500, fontFamily: SANS }}>
                 {isAuth ? (user ? m.signOut : m.signIn) : row.ttl}
               </span>
               <span style={{ fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>{row.val}</span>
+            </>
+          );
+          return clickable ? (
+            <button key={i} onClick={handleClick} style={{ ...rowStyle, background: "transparent", border: "none", cursor: "pointer", textAlign: "left" }}>
+              {inner}
+            </button>
+          ) : (
+            <div key={i} style={{ ...rowStyle, cursor: "default" }}>
+              {inner}
             </div>
           );
         })}
