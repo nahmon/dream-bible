@@ -23,6 +23,21 @@ function computeStreak(entries) {
   return streak;
 }
 
+function exportJournal(entries) {
+  if (!entries.length) return;
+  const lines = entries.map(e => [
+    `날짜: ${e.date || ""}`,
+    `꿈: ${e.dream || e.text || ""}`,
+    e.interpretation ? `해몽: ${e.interpretation}` : null,
+    "---",
+  ].filter(Boolean).join("\n")).join("\n\n");
+  const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "my-dreams.txt"; a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function MeScreen({ isPaid, uses, user, onReset }) {
   const admin = isAdmin(user);
   const m = L.home.me;
@@ -72,21 +87,30 @@ export default function MeScreen({ isPaid, uses, user, onReset }) {
 
       <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, overflow: "hidden" }}>
         {m.settings.map((row, i) => {
-          const isLink = row.val === "→";
-          const isLogout = i === m.settings.length - 1;
+          const isAuth = row.action === "auth";
+          const isLink = row.action === "link";
+          const isExport = row.action === "export";
+          const clickable = isAuth || isLink || isExport;
+          const handleClick = isAuth
+            ? (user ? signOut : signInWithGoogle)
+            : isLink
+              ? () => window.open(row.url, "_blank")
+              : isExport
+                ? () => exportJournal(entries)
+                : undefined;
           return (
             <div
               key={i}
-              onClick={isLogout ? (user ? signOut : signInWithGoogle) : undefined}
+              onClick={handleClick}
               style={{
                 padding: "15px 18px", display: "flex", alignItems: "center",
                 justifyContent: "space-between",
                 borderTop: i > 0 ? `1px solid ${T.g100}` : "none",
-                cursor: isLink || isLogout ? "pointer" : "default",
-                opacity: !isLink && !isLogout ? 0.55 : 1,
+                cursor: clickable ? "pointer" : "default",
+                opacity: clickable ? 1 : 0.45,
               }}>
-              <span style={{ fontSize: 14.5, color: isLogout ? T.brand : T.g900, fontWeight: isLogout ? 600 : 500, fontFamily: SANS }}>
-                {row.ttl === "__auth__" ? (user ? m.signOut : m.signIn) : row.ttl}
+              <span style={{ fontSize: 14.5, color: isAuth ? T.brand : T.g900, fontWeight: isAuth ? 600 : 500, fontFamily: SANS }}>
+                {isAuth ? (user ? m.signOut : m.signIn) : row.ttl}
               </span>
               <span style={{ fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>{row.val}</span>
             </div>
