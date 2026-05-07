@@ -171,11 +171,7 @@ export default function App() {
             </span>
             <span>{activeTab?.navLabel || "드림바이블"}</span>
           </div>
-          <button style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", color: T.g900, justifySelf: "end" }}>
-            <svg viewBox="0 0 24 24" fill="currentColor" width={20} height={20}>
-              <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-            </svg>
-          </button>
+          <div />
         </div>
 
         {/* Scrollable tab content */}
