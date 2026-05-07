@@ -57,7 +57,7 @@ export default function MeScreen({ isPaid, uses, user, onReset }) {
         <button
           onClick={user ? signOut : signInWithGoogle}
           style={{ flexShrink: 0, fontSize: 12.5, fontWeight: 600, color: user ? T.g500 : T.brand, background: user ? T.g100 : "#EEF2FF", border: "none", borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontFamily: SANS }}>
-          {user ? "로그아웃" : "Google 로그인"}
+          {user ? m.signOut : m.signIn}
         </button>
       </div>
 
@@ -85,7 +85,9 @@ export default function MeScreen({ isPaid, uses, user, onReset }) {
                 cursor: isLink || isLogout ? "pointer" : "default",
                 opacity: !isLink && !isLogout ? 0.55 : 1,
               }}>
-              <span style={{ fontSize: 14.5, color: isLogout ? T.brand : T.g900, fontWeight: isLogout ? 600 : 500, fontFamily: SANS }}>{row.ttl}</span>
+              <span style={{ fontSize: 14.5, color: isLogout ? T.brand : T.g900, fontWeight: isLogout ? 600 : 500, fontFamily: SANS }}>
+                {row.ttl === "__auth__" ? (user ? m.signOut : m.signIn) : row.ttl}
+              </span>
               <span style={{ fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>{row.val}</span>
             </div>
           );
