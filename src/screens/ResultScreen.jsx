@@ -2,21 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "../components/shared.jsx";
 import BannerAd from "../components/BannerAd.jsx";
 import { L } from "../lang/index.js";
-
-const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
-const T = {
-  brand: "#1B3A6B", brand2: "#122A4E", brandLight: "#E8EEF8",
-  g50: "#F9FAFB", g100: "#F2F4F6", g200: "#E5E8EB",
-  g400: "#B0B8C1", g500: "#8B95A1", g600: "#6B7684", g700: "#4E5968", g900: "#191F28",
-};
-
-const MUSIC_TRACKS = [
-  "https://cdn1.suno.ai/5QQOxOWbfamTaSyk.mp3",
-  "https://cdn1.suno.ai/ivHmH80ANV3fVKQz.mp3",
-  "https://cdn1.suno.ai/lbTtVLAP6HFoekE9.mp3",
-  "https://cdn1.suno.ai/YoRmzUgO5rsXsTyG.mp3",
-  "https://cdn1.suno.ai/4zeOhuBMCuYWRcYK.mp3",
-];
+import { SANS, T } from "../lib/theme.js";
+import { randomTrack } from "../lib/media.js";
 
 const FREE_IMAGE_KEY = () => {
   const d = new Date();
@@ -61,14 +48,13 @@ export default function ResultScreen({ result, onClose }) {
       return () => { bgAudio.pause(); bgAudio.src = ""; };
     }
     // Fallback for journal re-open (fresh gesture available)
-    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
-    const audio = new Audio(track);
+    const audio = new Audio(randomTrack());
     audio.volume = 0.3;
     audio.loop = true;
     audioRef.current = audio;
     audio.play().then(() => setIsPlaying(true)).catch(() => {});
     return () => { audio.pause(); audio.src = ""; };
-  }, []);
+  }, [bgAudio]);
 
   useEffect(() => {
     if (isPlaying && !musicToastShownRef.current) {
@@ -91,6 +77,7 @@ export default function ResultScreen({ result, onClose }) {
   const paidCapReached = isPaid && paidImgCount >= PAID_IMAGE_CAP;
   const showImageSection = (isPaid && !paidCapReached) || freeImageAvailable || !!initialImageUrl;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (imageUrl || generateCalledRef.current) return;
     if (!isPaid && !freeImageAvailable) return;

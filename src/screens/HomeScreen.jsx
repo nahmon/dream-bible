@@ -5,23 +5,10 @@ import { useToast } from "../components/shared.jsx";
 import BannerAd from "../components/BannerAd.jsx";
 import { L, IS_EN } from "../lang/index.js";
 import { signInWithGoogle } from "../lib/supabase.js";
+import { randomTrack } from "../lib/media.js";
+import { SANS, T } from "../lib/theme.js";
 
 const IAP_SKU = "bibledream_monthly_2500";
-
-const MUSIC_TRACKS = [
-  "https://cdn1.suno.ai/5QQOxOWbfamTaSyk.mp3",
-  "https://cdn1.suno.ai/ivHmH80ANV3fVKQz.mp3",
-  "https://cdn1.suno.ai/lbTtVLAP6HFoekE9.mp3",
-  "https://cdn1.suno.ai/YoRmzUgO5rsXsTyG.mp3",
-  "https://cdn1.suno.ai/4zeOhuBMCuYWRcYK.mp3",
-];
-
-const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
-const T = {
-  brand: "#1B3A6B", brand2: "#122A4E", brandLight: "#E8EEF8",
-  g50: "#F9FAFB", g100: "#F2F4F6", g200: "#E5E8EB", g400: "#B0B8C1",
-  g500: "#8B95A1", g600: "#6B7684", g700: "#4E5968", g900: "#191F28", paper: "#FFFFFF",
-};
 
 function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComment, onClose, user }) {
   const [text, setText] = useState("");
@@ -146,9 +133,12 @@ function UpgradeModal({ onClose, onSuccess, userId }) {
         sku: IAP_SKU,
         processProductGrant: async ({ orderId }) => {
           try {
-            const res = await fetch("https://dream-bible.vercel.app/api/verify-iap", {
+            const res = await fetch("/api/verify-iap", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                "x-iap-secret": import.meta.env.VITE_IAP_WEBHOOK_SECRET ?? "",
+              },
               body: JSON.stringify({ orderId, userId }),
             });
             const data = await res.json();
@@ -275,8 +265,7 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       return;
     }
     // Create audio during user gesture — before any await so autoplay works
-    const track = MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)];
-    const bgAudio = new Audio(track);
+    const bgAudio = new Audio(randomTrack());
     bgAudio.volume = 0.3;
     bgAudio.loop = true;
     setLoading(true);
@@ -285,8 +274,8 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       const lang = IS_EN ? "en" : "ko";
       const url = isCounsel ? "/api/counsel" : "/api/interpret";
       const body = isCounsel
-        ? { situation_text: dream, lang }
-        : { dream_text: dream, lang };
+        ? { situation_text: dream, lang, userId }
+        : { dream_text: dream, lang, userId };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

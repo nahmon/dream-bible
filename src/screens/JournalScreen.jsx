@@ -10,6 +10,26 @@ const T = {
 
 const j = L.home.journal;
 
+function buildMonthFilters() {
+  const now = new Date();
+  const filters = [
+    { id: "all", label: j.months[0]?.label ?? "All" },
+    { id: "thisMonth", label: j.months[1]?.label ?? "This month" },
+  ];
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    filters.push({
+      id: `m${i}`,
+      label: d.toLocaleString("default", { month: "long" }),
+      monthIndex: d.getMonth(),
+      year: d.getFullYear(),
+    });
+  }
+  return filters;
+}
+
+const MONTH_FILTERS = buildMonthFilters();
+
 function formatDate(isoStr) {
   const d = new Date(isoStr);
   return {
@@ -39,12 +59,13 @@ export default function JournalScreen({ onOpenResult }) {
   const [filterId, setFilterId] = useState("all");
   const entries = JSON.parse(localStorage.getItem("db_journal") || "[]");
 
-  const selectedMonth = j.months.find(m => m.id === filterId);
+  const selectedMonth = MONTH_FILTERS.find(m => m.id === filterId);
 
   const filtered = entries.filter(e => {
     if (!selectedMonth || selectedMonth.id === "all") return true;
     if (selectedMonth.id === "thisMonth") return isThisMonth(e.date);
-    return new Date(e.date).getMonth() === selectedMonth.monthIndex;
+    const d = new Date(e.date);
+    return d.getMonth() === selectedMonth.monthIndex && d.getFullYear() === selectedMonth.year;
   });
 
   return (
@@ -59,7 +80,7 @@ export default function JournalScreen({ onOpenResult }) {
       </div>
 
       <div style={{ display: "flex", gap: 8, padding: "4px 20px 16px", overflowX: "auto", scrollbarWidth: "none" }}>
-        {j.months.map(m => (
+        {MONTH_FILTERS.map(m => (
           <button key={m.id} onClick={() => setFilterId(m.id)} style={{
             flexShrink: 0, background: filterId === m.id ? T.g900 : "transparent",
             border: `1.5px solid ${filterId === m.id ? T.g900 : T.g200}`,

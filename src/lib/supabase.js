@@ -5,10 +5,8 @@ export const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-export const ADMIN_EMAILS = ["20morn@gmail.com"];
-
 export const isAdmin = (user) =>
-  !!user && ADMIN_EMAILS.includes(user.email);
+  !!user && !!import.meta.env.VITE_ADMIN_EMAIL && user.email === import.meta.env.VITE_ADMIN_EMAIL;
 
 export const signInWithGoogle = () =>
   supabase.auth.signInWithOAuth({
