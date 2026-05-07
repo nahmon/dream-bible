@@ -24,8 +24,8 @@ export default async function handler(req, res) {
   let event;
   try {
     event = stripe.webhooks.constructEvent(buf, sig, process.env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).json({ error: `Webhook error: ${err.message}` });
+  } catch {
+    return res.status(400).json({ error: "Invalid webhook signature" });
   }
 
   const upsertSubscription = async (userId, expiresAt, active) => {
@@ -40,7 +40,9 @@ export default async function handler(req, res) {
     const session = event.data.object;
     const userId = session.metadata?.userId || session.client_reference_id;
     const subId = session.subscription;
-    if (subId) {
+    if (subId && userId) {
+      // Propagate userId into subscription metadata so future events can resolve it
+      await stripe.subscriptions.update(subId, { metadata: { userId } });
       const sub = await stripe.subscriptions.retrieve(subId);
       const expiresAt = new Date(sub.current_period_end * 1000).toISOString();
       await upsertSubscription(userId, expiresAt, true);

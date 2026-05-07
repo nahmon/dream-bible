@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import { setCors } from "./_lib/cors.js";
+import { checkAndIncrementUsage } from "./_lib/usage.js";
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -64,23 +66,25 @@ async function generateImageWithImagen(dreamText) {
   return `data:image/jpeg;base64,${imageBytes}`;
 }
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
-
 export default async function handler(req, res) {
-  setCors(res);
+  setCors(res, req);
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { dream_text, skip_image, lang = "ko" } = req.body ?? {};
+  const { dream_text, skip_image, lang = "ko", userId } = req.body ?? {};
   const isEn = lang === "en";
 
   if (!dream_text?.trim()) return res.status(400).json({ error: isEn ? "Please enter your dream." : "꿈 내용을 입력해주세요." });
   if (dream_text.trim().length < 10) return res.status(400).json({ error: isEn ? "Please describe your dream in more detail." : "꿈을 조금 더 자세히 적어주세요." });
   if (dream_text.trim().length > 2000) return res.status(400).json({ error: isEn ? "Please keep your dream under 2,000 characters." : "꿈 설명은 2,000자 이내로 작성해주세요." });
+
+  const usage = await checkAndIncrementUsage(userId);
+  if (!usage.allowed) {
+    return res.status(403).json({
+      error: isEn ? "You've used all your free reflections this month." : "이번 달 무료 횟수를 모두 사용했습니다.",
+      limitReached: true,
+    });
+  }
 
   const SYSTEM_PROMPT = isEn ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_KO;
   const dreamLabel = isEn ? "My dream" : "제 꿈";

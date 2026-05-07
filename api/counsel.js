@@ -1,4 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
+import { setCors } from "./_lib/cors.js";
+import { checkAndIncrementUsage } from "./_lib/usage.js";
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -48,18 +50,12 @@ Response format:
 **Prayer Focus**
 (A short prayer intention or Bible verse to carry with you today)`;
 
-function setCors(res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-}
-
 export default async function handler(req, res) {
-  setCors(res);
+  setCors(res, req);
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { situation_text, lang = "ko" } = req.body ?? {};
+  const { situation_text, lang = "ko", userId } = req.body ?? {};
   const isEn = lang === "en";
   const SYSTEM_PROMPT = isEn ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_KO;
   const situationLabel = isEn ? "My situation" : "제 상황";
@@ -67,6 +63,14 @@ export default async function handler(req, res) {
   if (!situation_text?.trim()) return res.status(400).json({ error: isEn ? "Please describe your situation." : "상황을 입력해주세요." });
   if (situation_text.trim().length < 10) return res.status(400).json({ error: isEn ? "Please describe your situation in more detail." : "상황을 조금 더 자세히 적어주세요." });
   if (situation_text.trim().length > 2000) return res.status(400).json({ error: isEn ? "Please keep your description under 2,000 characters." : "내용은 2,000자 이내로 작성해주세요." });
+
+  const usage = await checkAndIncrementUsage(userId);
+  if (!usage.allowed) {
+    return res.status(403).json({
+      error: isEn ? "You've used all your free reflections this month." : "이번 달 무료 횟수를 모두 사용했습니다.",
+      limitReached: true,
+    });
+  }
 
   try {
     const result = await genai.models.generateContent({
