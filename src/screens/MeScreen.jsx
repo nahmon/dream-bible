@@ -85,6 +85,22 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
         ))}
       </div>
 
+      {isPaid && !admin && (
+        <div style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 14, padding: "14px 18px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#1B3A6B", fontFamily: SANS }}>
+            {m.proCard.badge}
+          </span>
+          <a
+            href={m.proCard.manageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 12.5, fontWeight: 600, color: "#1B3A6B", textDecoration: "none", fontFamily: SANS }}
+          >
+            {m.proCard.manage}
+          </a>
+        </div>
+      )}
+
       <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, overflow: "hidden" }}>
         {m.settings.map((row, i) => {
           const isAuth = row.action === "auth";
