@@ -1,5 +1,6 @@
 import { L } from "../lang/index.js";
 import { signInWithGoogle, signOut, isAdmin } from "../lib/supabase.js";
+import { useToast } from "../components/shared.jsx";
 
 const SANS = '"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif';
 const T = {
@@ -27,7 +28,7 @@ function exportJournal(entries) {
   if (!entries.length) return;
   const lines = entries.map(e => [
     `날짜: ${e.date || ""}`,
-    `꿈: ${e.dream || e.text || ""}`,
+    `꿈: ${e.dream_text || e.dream || e.text || ""}`,
     e.interpretation ? `해몽: ${e.interpretation}` : null,
     "---",
   ].filter(Boolean).join("\n")).join("\n\n");
@@ -39,6 +40,7 @@ function exportJournal(entries) {
 }
 
 export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
+  const { showToast } = useToast();
   const admin = isAdmin(user);
   const m = L.home.me;
   const entries = JSON.parse(localStorage.getItem("db_journal") || "[]");
@@ -55,7 +57,7 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
   return (
     <div style={{ padding: "24px 20px 100px", fontFamily: SANS }}>
 
-      <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, padding: 18, marginBottom: 12, display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, padding: "22px 18px", marginBottom: 16, display: "flex", alignItems: "center", gap: 14 }}>
         <div style={{ width: 48, height: 48, borderRadius: 12, background: T.brand, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0, overflow: "hidden" }}>
           {user?.user_metadata?.avatar_url
             ? <img src={user.user_metadata.avatar_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -76,9 +78,9 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
         </button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, overflow: "hidden", marginBottom: 18 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, overflow: "hidden", marginBottom: 20 }}>
         {stats.map((s, i) => (
-          <div key={i} style={{ padding: "16px 12px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${T.g200}` : "none" }}>
+          <div key={i} style={{ padding: "20px 12px", textAlign: "center", borderLeft: i > 0 ? `1px solid ${T.g200}` : "none" }}>
             <div style={{ fontSize: 22, fontWeight: 600, color: T.brand, letterSpacing: "-.02em", marginBottom: 4, fontFamily: SANS }}>{s.num}</div>
             <div style={{ fontSize: 12, color: T.g500, fontWeight: 500, fontFamily: SANS }}>{s.lbl}</div>
           </div>
@@ -123,12 +125,12 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
                         navigator.share({ text: msg }).catch(() => {});
                       } else {
                         navigator.clipboard.writeText(msg).catch(() => {});
-                        alert("클립보드에 복사됐어요!");
+                        showToast("초대 링크를 복사했어요", "success");
                       }
                     }
                   : undefined;
           const rowStyle = {
-            padding: "15px 18px", display: "flex", alignItems: "center",
+            padding: "18px 18px", display: "flex", alignItems: "center",
             justifyContent: "space-between", width: "100%",
             borderTop: i > 0 ? `1px solid ${T.g100}` : "none",
             opacity: clickable ? 1 : 0.45,

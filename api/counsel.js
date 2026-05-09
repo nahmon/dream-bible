@@ -75,6 +75,7 @@ export default async function handler(req, res) {
   try {
     const result = await genai.models.generateContent({
       model: "gemini-2.5-flash",
+      config: { thinkingConfig: { thinkingBudget: 0 } },
       contents: `${SYSTEM_PROMPT}\n\n${situationLabel}:\n${situation_text.trim()}`,
     });
     return res.status(200).json({ interpretation: result.text ?? "" });

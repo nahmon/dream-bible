@@ -7,6 +7,10 @@ const supabase = createClient(
 
 const FREE_LIMIT = 3;
 
+const ADMIN_USER_IDS = new Set(
+  (process.env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean)
+);
+
 function currentMonth() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -14,6 +18,10 @@ function currentMonth() {
 
 export async function checkAndIncrementUsage(userId) {
   if (!userId) return { allowed: false, isPaid: false, remaining: 0 };
+
+  if (ADMIN_USER_IDS.has(userId)) {
+    return { allowed: true, isPaid: true, isAdmin: true };
+  }
 
   // Check active subscription first
   const { data: sub } = await supabase

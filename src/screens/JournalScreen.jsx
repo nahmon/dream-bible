@@ -84,7 +84,7 @@ export default function JournalScreen({ onOpenResult }) {
           <button key={m.id} onClick={() => setFilterId(m.id)} style={{
             flexShrink: 0, background: filterId === m.id ? T.g900 : "transparent",
             border: `1.5px solid ${filterId === m.id ? T.g900 : T.g200}`,
-            borderRadius: 999, padding: "8px 16px",
+            borderRadius: 999, padding: "10px 18px",
             fontSize: 14, color: filterId === m.id ? "#fff" : T.g700,
             fontWeight: 600, cursor: "pointer", fontFamily: SANS, transition: "all .15s",
           }}>{m.label}</button>
@@ -105,7 +105,7 @@ export default function JournalScreen({ onOpenResult }) {
           return (
             <div key={entry.id || i} onClick={() => onOpenResult(entry)} style={{
               display: "grid", gridTemplateColumns: "60px 1fr 24px",
-              gap: 16, padding: "18px 20px", alignItems: "flex-start",
+              gap: 16, padding: "20px 20px", alignItems: "flex-start",
               borderBottom: `1px solid ${T.g100}`, cursor: "pointer",
             }}>
               <div style={{ paddingTop: 2 }}>

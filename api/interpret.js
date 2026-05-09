@@ -91,6 +91,7 @@ export default async function handler(req, res) {
 
   const textPromise = genai.models.generateContent({
     model: "gemini-2.5-flash",
+    config: { thinkingConfig: { thinkingBudget: 0 } },
     contents: `${SYSTEM_PROMPT}\n\n${dreamLabel}:\n${dream_text.trim()}`,
   });
 

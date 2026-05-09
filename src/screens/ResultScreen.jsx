@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { useToast } from "../components/shared.jsx";
 import BannerAd from "../components/BannerAd.jsx";
 import { L } from "../lang/index.js";
-import { SANS, T } from "../lib/theme.js";
+import { SANS, SERIF, T } from "../lib/theme.js";
 import { randomTrack } from "../lib/media.js";
+import { getCounselImage } from "../lib/counselImages.js";
 
 const FREE_IMAGE_KEY = () => {
   const d = new Date();
@@ -30,10 +31,18 @@ function parseInterpretation(text) {
 export default function ResultScreen({ result, onClose }) {
   const { id, interpretation, dream_text, image_url: initialImageUrl, isPaid, mode, bgAudio } = result ?? {};
   const isCounsel = mode === "counsel";
+  const accent      = isCounsel ? T.gold      : T.brand;
+  const accent2     = isCounsel ? "#8B5E1A"   : T.brand2;
+  const accentLight = isCounsel ? T.goldLight : T.brandLight;
+  const cardBg      = isCounsel ? T.parchment : "#fff";
+  const cardBorder  = isCounsel ? T.goldLight : T.g200;
+  const bodyFont    = isCounsel ? SERIF       : SANS;
   const parsed = parseInterpretation(interpretation);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const [imageUrl, setImageUrl] = useState(initialImageUrl ?? null);
+  const [imageUrl, setImageUrl] = useState(
+    initialImageUrl ?? (isCounsel ? getCounselImage(dream_text) : null)
+  );
   const { showToast } = useToast();
   const generateCalledRef = useRef(false);
   const r = L.home.result;
@@ -44,7 +53,7 @@ export default function ResultScreen({ result, onClose }) {
 
   useEffect(() => {
     if (bgAudio) {
-      setIsPlaying(true);
+      bgAudio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
       return () => { bgAudio.pause(); bgAudio.src = ""; };
     }
     // Fallback for journal re-open (fresh gesture available)
@@ -73,13 +82,15 @@ export default function ResultScreen({ result, onClose }) {
   const [isFirstEver] = useState(() => !localStorage.getItem("db_first_image_done"));
   const [freeMonthUsed] = useState(() => !!localStorage.getItem(FREE_IMAGE_KEY()));
   const [paidImgCount] = useState(() => parseInt(localStorage.getItem(PAID_IMAGE_KEY()) || "0"));
+  const paidImgRemaining = PAID_IMAGE_CAP - paidImgCount - 1;
   const freeImageAvailable = !isPaid && (isFirstEver || !freeMonthUsed);
   const paidCapReached = isPaid && paidImgCount >= PAID_IMAGE_CAP;
-  const showImageSection = (isPaid && !paidCapReached) || freeImageAvailable || !!initialImageUrl;
+  const showImageSection = isCounsel || (isPaid && !paidCapReached) || freeImageAvailable || !!initialImageUrl;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (imageUrl || generateCalledRef.current) return;
+    if (isCounsel) return; // preset image already set
     if (!isPaid && !freeImageAvailable) return;
     if (paidCapReached) return;
     generateCalledRef.current = true;
@@ -168,13 +179,13 @@ export default function ResultScreen({ result, onClose }) {
             </svg>
           </button>
           <div style={{ textAlign: "center", fontFamily: SANS, fontSize: 17, fontWeight: 700, color: T.g900, letterSpacing: "-.015em", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ width: 20, height: 20, borderRadius: 5, background: T.brand, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <span style={{ width: 20, height: 20, borderRadius: 5, background: accent, display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <svg viewBox="0 0 22 22" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" width={12} height={12}><path d="M11 4 V18 M5 8 H17" /></svg>
             </span>
             <span>{r.navTitle[isCounsel ? "counsel" : "dream"]}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 4 }}>
-            <button onClick={toggleMusic} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: isPlaying ? T.brand : T.g400 }}>
+            <button onClick={toggleMusic} style={{ background: "transparent", border: 0, cursor: "pointer", width: 44, height: 48, display: "flex", alignItems: "center", justifyContent: "center", color: isPlaying ? accent : T.g400 }}>
               {isPlaying ? (
                 <svg viewBox="0 0 24 24" fill="currentColor" width={20} height={20}><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
               ) : (
@@ -198,29 +209,30 @@ export default function ResultScreen({ result, onClose }) {
                 {!imgLoaded && !imgError && (
                   <div className="img-shimmer" style={{ position: "absolute", inset: 0 }} />
                 )}
-                {imgError && (
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <span style={{ fontSize: 13, color: "rgba(255,255,255,.3)", fontFamily: SANS }}>{r.imageError}</span>
-                  </div>
-                )}
                 {imageUrl && (
                   <img
                     src={imageUrl}
                     alt={r.shareAppTitle}
                     onLoad={() => setImgLoaded(true)}
+                    onError={() => { setImgError(true); setImageUrl(null); }}
                     style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.6s ease" }}
                   />
                 )}
+                {imgError && !imageUrl && (
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,.3)", fontFamily: SANS }}>{r.imageError}</span>
+                  </div>
+                )}
               </div>
               {!isPaid && freeImageAvailable && (
-                <div style={{ marginTop: 8, padding: "10px 14px", background: T.brandLight, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: 12.5, color: T.brand, fontWeight: 600, fontFamily: SANS }}>{r.freeImageUsing}</span>
-                  <span style={{ fontSize: 12, color: T.brand2, fontFamily: SANS }}>{r.freeImageProCta}</span>
+                <div style={{ marginTop: 8, padding: "10px 14px", background: accentLight, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12.5, color: accent, fontWeight: 600, fontFamily: SANS }}>{r.freeImageUsing}</span>
+                  <span style={{ fontSize: 12, color: accent2, fontFamily: SANS }}>{r.freeImageProCta}</span>
                 </div>
               )}
-              {isPaid && !paidCapReached && (
-                <div style={{ marginTop: 8, padding: "8px 14px", background: T.brandLight, borderRadius: 10, textAlign: "right" }}>
-                  <span style={{ fontSize: 12, color: T.brand2, fontFamily: SANS }}>{r.paidImageRemaining(PAID_IMAGE_CAP - paidImgCount - 1)}</span>
+              {isPaid && !paidCapReached && paidImgRemaining <= 1 && (
+                <div style={{ marginTop: 8, padding: "8px 14px", background: accentLight, borderRadius: 10, textAlign: "right" }}>
+                  <span style={{ fontSize: 12, color: accent2, fontFamily: SANS }}>{r.paidImageRemaining(paidImgRemaining)}</span>
                 </div>
               )}
             </div>
@@ -228,20 +240,20 @@ export default function ResultScreen({ result, onClose }) {
 
           {!isPaid && !freeImageAvailable && !initialImageUrl && (
             <div style={{ marginBottom: 20, borderRadius: 16, border: `1.5px dashed ${T.g200}`, padding: "20px 18px", textAlign: "center" }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>🖼️</div>
+              <svg viewBox="0 0 24 24" fill="none" stroke={T.g400} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width={40} height={40} style={{ marginBottom: 8 }}><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
               <p style={{ fontSize: 14, color: T.g600, lineHeight: 1.6, margin: "0 0 4px", fontFamily: SANS, fontWeight: 600 }}>{r.freeImageExhausted}</p>
               <p style={{ fontSize: 13, color: T.g400, margin: 0, fontFamily: SANS }}>{r.freeImageExhaustedSub(PAID_IMAGE_CAP)}</p>
             </div>
           )}
           {isPaid && paidCapReached && !initialImageUrl && (
             <div style={{ marginBottom: 20, borderRadius: 16, border: `1.5px dashed ${T.g200}`, padding: "20px 18px", textAlign: "center" }}>
-              <div style={{ fontSize: 22, marginBottom: 8 }}>🖼️</div>
+              <svg viewBox="0 0 24 24" fill="none" stroke={T.g400} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width={40} height={40} style={{ marginBottom: 8 }}><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
               <p style={{ fontSize: 14, color: T.g600, lineHeight: 1.6, margin: "0 0 4px", fontFamily: SANS, fontWeight: 600 }}>{r.paidImageExhausted(PAID_IMAGE_CAP)}</p>
               <p style={{ fontSize: 13, color: T.g400, margin: 0, fontFamily: SANS }}>{r.paidImageExhaustedSub(PAID_IMAGE_CAP)}</p>
             </div>
           )}
 
-          <button onClick={handleShare} style={{ width: "100%", marginBottom: 16, background: T.brand, color: "#fff", border: 0, borderRadius: 14, padding: "15px 20px", fontFamily: SANS, fontSize: 15, fontWeight: 700, letterSpacing: "-.01em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <button onClick={handleShare} style={{ width: "100%", marginBottom: 16, background: accent, color: "#fff", border: 0, borderRadius: 14, padding: "15px 20px", fontFamily: SANS, fontSize: 15, fontWeight: 700, letterSpacing: "-.01em", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width={17} height={17}>
               <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
               <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
@@ -254,23 +266,23 @@ export default function ResultScreen({ result, onClose }) {
             <p style={{ fontSize: 15, color: T.g700, lineHeight: 1.7, margin: 0, fontFamily: SANS }}>{dream_text}</p>
           </div>
 
-          <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 16, padding: "20px" }}>
+          <div style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 16, padding: "20px" }}>
             <div>
               {parsed.map(block => {
                 if (block.type === "heading") return (
-                  <div key={block.key} style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".04em", color: T.brand, marginTop: 22, marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${T.g100}`, fontFamily: SANS }}>
+                  <div key={block.key} style={{ fontSize: 13, fontWeight: 700, letterSpacing: ".04em", color: accent, marginTop: 22, marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${T.g100}`, fontFamily: SANS }}>
                     {block.text}
                   </div>
                 );
                 if (block.type === "bullet") return (
                   <div key={block.key} style={{ display: "flex", gap: 12, marginBottom: 12, alignItems: "flex-start" }}>
-                    <span style={{ flexShrink: 0, marginTop: 9, width: 5, height: 5, borderRadius: "50%", background: T.brand, display: "inline-block" }} />
-                    <span style={{ fontSize: 16, color: T.g700, lineHeight: 1.7, fontFamily: SANS }}>{block.text}</span>
+                    <span style={{ flexShrink: 0, marginTop: 9, width: 5, height: 5, borderRadius: "50%", background: accent, display: "inline-block" }} />
+                    <span style={{ fontSize: 16, color: T.g700, lineHeight: 1.7, fontFamily: bodyFont }}>{block.text}</span>
                   </div>
                 );
                 if (block.type === "spacer") return <div key={block.key} style={{ height: 8 }} />;
                 return (
-                  <p key={block.key} style={{ fontSize: 16, color: T.g700, lineHeight: 1.75, margin: "0 0 10px", fontFamily: SANS }}>
+                  <p key={block.key} style={{ fontSize: 16, color: T.g700, lineHeight: 1.75, margin: "0 0 10px", fontFamily: bodyFont }}>
                     {block.text}
                   </p>
                 );
@@ -290,6 +302,12 @@ export default function ResultScreen({ result, onClose }) {
               {r.close}
             </button>
           </div>
+
+          {isPaid && !paidCapReached && paidImgRemaining >= 2 && (
+            <div style={{ marginTop: 16, padding: "8px 14px", background: accentLight, borderRadius: 10, textAlign: "right" }}>
+              <span style={{ fontSize: 12, color: accent2, fontFamily: SANS }}>{r.paidImageRemaining(paidImgRemaining)}</span>
+            </div>
+          )}
 
           <BannerAd style={{ margin: "16px 0 0" }} />
 

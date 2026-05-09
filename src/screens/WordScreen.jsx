@@ -20,6 +20,10 @@ async function shareVerse(v) {
 }
 
 export default function WordScreen() {
+  const todayIndex = new Date().getDate() % w.verses.length;
+  const featured = w.verses[todayIndex];
+  const rest = w.verses.filter((_, i) => i !== todayIndex);
+
   return (
     <div style={{ padding: "8px 20px 100px", fontFamily: SANS }}>
       <div style={{ padding: "16px 0 20px" }}>
@@ -31,7 +35,31 @@ export default function WordScreen() {
         </p>
       </div>
 
-      {w.verses.map((v, i) => (
+      {/* Today's featured verse */}
+      <div style={{ background: T.brand, borderRadius: 20, padding: "24px 24px 20px", marginBottom: 20 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: "rgba(255,255,255,.55)", letterSpacing: ".1em", marginBottom: 14, fontFamily: SANS }}>
+          {featured.stamp.toUpperCase()}
+        </div>
+        <p style={{ fontWeight: 600, fontSize: 17, lineHeight: 1.7, color: "#fff", margin: "0 0 18px", letterSpacing: "-.01em", fontFamily: SANS }}>
+          {featured.quote}
+        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 12, color: "rgba(255,255,255,.65)", fontWeight: 600, fontFamily: SANS }}>{featured.cite}</span>
+          <button
+            onClick={() => shareVerse(featured)}
+            style={{ background: "rgba(255,255,255,.15)", border: "1px solid rgba(255,255,255,.25)", borderRadius: 8, padding: "5px 12px", display: "flex", alignItems: "center", gap: 5, cursor: "pointer", color: "#fff", fontSize: 12, fontWeight: 600, fontFamily: SANS }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={13} height={13}>
+              <circle cx="18" cy="5" r="2" /><circle cx="6" cy="12" r="2" /><circle cx="18" cy="19" r="2" />
+              <line x1="8" y1="10.6" x2="15.9" y2="6.4" /><line x1="8" y1="13.4" x2="15.9" y2="17.6" />
+            </svg>
+            {w.shareBtn}
+          </button>
+        </div>
+      </div>
+
+      {/* Rest of verses */}
+      {rest.map((v, i) => (
         <div key={i} style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 14, padding: "18px 20px 14px", marginBottom: 12, position: "relative" }}>
           <span style={{
             position: "absolute", top: -9, left: 18,

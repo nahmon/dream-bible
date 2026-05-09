@@ -154,6 +154,7 @@ export default function App() {
           @keyframes spin { to { transform: rotate(360deg); } }
           @keyframes pulse { 0%,100%{opacity:.4;transform:scale(1);} 50%{opacity:1;transform:scale(1.2);} }
           button:active { transform: scale(0.97); transition: transform 0.08s ease; }
+          textarea::placeholder, input::placeholder { color: #8B95A1; opacity: 1; }
         `}</style>
 
         {/* TDS mini-app nav bar */}
@@ -205,12 +206,14 @@ export default function App() {
               <button key={t.id} onClick={() => handleTabChange(t.id)} style={{
                 flex: 1, background: "transparent", border: 0, cursor: "pointer",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                gap: 3, padding: "8px 4px 6px", borderRadius: 8,
+                gap: 3, padding: "6px 4px 6px", borderRadius: 8,
                 color: tab === t.id ? T.brand : T.g400,
-                fontFamily: SANS, fontSize: 11, fontWeight: 600, letterSpacing: "-.01em",
+                fontFamily: SANS, fontSize: 11, fontWeight: tab === t.id ? 700 : 500, letterSpacing: "-.01em",
                 transition: "color .18s",
               }}>
-                {t.icon}
+                <div style={{ padding: "4px 14px", borderRadius: 8, background: tab === t.id ? "#EEF2FF" : "transparent", transition: "background .18s" }}>
+                  {t.icon}
+                </div>
                 {t.label}
               </button>
             ))}

@@ -4,16 +4,17 @@ import { IAP } from "@apps-in-toss/web-framework";
 import { useToast } from "../components/shared.jsx";
 import BannerAd from "../components/BannerAd.jsx";
 import { L, IS_EN } from "../lang/index.js";
-import { signInWithGoogle } from "../lib/supabase.js";
+import { signInWithGoogle, isAdmin } from "../lib/supabase.js";
 import { randomTrack } from "../lib/media.js";
 import { SANS, T } from "../lib/theme.js";
 
 const IAP_SKU = "bibledream_monthly_2500";
 
-function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComment, onClose, user }) {
+function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComment, onClose }) {
   const [text, setText] = useState("");
   const [localComments, setLocalComments] = useState(initialUserComments || []);
   const [bottom, setBottom] = useState(0);
+  const [vvHeight, setVvHeight] = useState(window.innerHeight);
   const textareaRef = useRef(null);
   const allComments = [...(item.commentList || []), ...localComments];
   const h = L.home;
@@ -21,8 +22,10 @@ function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComm
   useEffect(() => {
     if (!window.visualViewport) return;
     const onResize = () => {
-      const offset = Math.max(0, window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop);
+      const vv = window.visualViewport;
+      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
       setBottom(offset);
+      setVvHeight(vv.height);
     };
     window.visualViewport.addEventListener("resize", onResize);
     window.visualViewport.addEventListener("scroll", onResize);
@@ -45,7 +48,7 @@ function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComm
       <div style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(25,31,40,.55)" }} onClick={onClose} />
       <div style={{
         position: "fixed", bottom, left: 0, right: 0, zIndex: 201,
-        background: "#fff", borderRadius: "22px 22px 0 0", maxHeight: "80vh",
+        background: "#fff", borderRadius: "22px 22px 0 0", maxHeight: bottom > 0 ? `${vvHeight * 0.97}px` : "80vh",
         display: "flex", flexDirection: "column",
         boxShadow: "0 -8px 40px rgba(25,31,40,.18)",
       }}>
@@ -75,26 +78,19 @@ function CommentsSheet({ item, idx, userComments: initialUserComments, onAddComm
             </div>
           ))}
         </div>
-        {user ? (
-          <div style={{ padding: `12px 16px ${bottom > 0 ? "12px" : "calc(12px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", gap: 10, alignItems: "flex-end", flexShrink: 0 }}>
-            <textarea
-              ref={textareaRef}
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onClick={() => textareaRef.current?.focus()}
-              placeholder={h.commentPlaceholder}
-              enterKeyHint="send"
-              rows={1}
-              style={{ flex: 1, border: `1.5px solid ${T.g200}`, borderRadius: 12, padding: "11px 14px", fontFamily: SANS, fontSize: 16, color: T.g900, outline: "none", background: T.g50, resize: "none", lineHeight: 1.5, minHeight: 44, WebkitAppearance: "none" }}
-            />
-            <button onClick={handleAdd} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700, flexShrink: 0, height: 44 }}>{h.commentSubmit}</button>
-          </div>
-        ) : (
-          <div style={{ padding: `16px 20px ${bottom > 0 ? "16px" : "calc(16px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <p style={{ margin: 0, fontSize: 14, color: T.g500, fontFamily: SANS }}>{h.commentLoginPrompt}</p>
-            <button onClick={() => { sessionStorage.setItem("after_login_comments", idx); signInWithGoogle(); }} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "11px 24px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700 }}>{h.commentLoginBtn}</button>
-          </div>
-        )}
+        <div style={{ padding: `12px 16px ${bottom > 0 ? "12px" : "calc(12px + env(safe-area-inset-bottom))"}`, borderTop: `1px solid ${T.g100}`, display: "flex", gap: 10, alignItems: "flex-end", flexShrink: 0 }}>
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onClick={() => textareaRef.current?.focus()}
+            placeholder={h.commentPlaceholder}
+            enterKeyHint="send"
+            rows={1}
+            style={{ flex: 1, border: `1.5px solid ${T.g200}`, borderRadius: 12, padding: "11px 14px", fontFamily: SANS, fontSize: 16, color: T.g900, outline: "none", background: T.g50, resize: "none", lineHeight: 1.5, minHeight: 44, WebkitAppearance: "none" }}
+          />
+          <button onClick={handleAdd} style={{ background: T.brand, border: 0, borderRadius: 12, padding: "12px 16px", cursor: "pointer", color: "#fff", fontFamily: SANS, fontSize: 14, fontWeight: 700, flexShrink: 0, height: 44 }}>{h.commentSubmit}</button>
+        </div>
       </div>
     </>
   );
@@ -213,9 +209,20 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
   const [mode, setMode] = useState("dream");
   const [dream, setDream] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const [showUpgrade, setShowUpgrade] = useState(false);
   const { showToast } = useToast();
   const h = L.home;
+
+  const LOADING_MSGS = IS_EN
+    ? ["Analyzing your dream…", "Searching the Word…", "Finding meaning…", "Almost there…"]
+    : ["꿈을 분석 중…", "성경 말씀 찾는 중…", "해몽을 작성 중…", "거의 다 됐어요…"];
+
+  useEffect(() => {
+    if (!loading) { setLoadingMsgIdx(0); return; }
+    const t = setInterval(() => setLoadingMsgIdx(i => (i + 1) % LOADING_MSGS.length), 2500);
+    return () => clearInterval(t);
+  }, [loading]);
 
   const [liked, setLiked] = useState(() => {
     try { return JSON.parse(localStorage.getItem("community_liked") || "{}"); } catch { return {}; }
@@ -264,18 +271,20 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       setShowUpgrade(true);
       return;
     }
-    // Create audio during user gesture — before any await so autoplay works
+    // Play before await — iOS autoplay policy requires play() in gesture context
     const bgAudio = new Audio(randomTrack());
     bgAudio.volume = 0.3;
     bgAudio.loop = true;
+    bgAudio.play().catch(() => {});
     setLoading(true);
     try {
       const isCounsel = mode === "counsel";
       const lang = IS_EN ? "en" : "ko";
+      const adminMode = isAdmin(user);
       const url = isCounsel ? "/api/counsel" : "/api/interpret";
       const body = isCounsel
         ? { situation_text: dream, lang, userId }
-        : { dream_text: dream, lang, userId };
+        : { dream_text: dream, lang, userId, skip_image: !adminMode };
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,11 +297,11 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       }
       onUsed();
       const id = Date.now();
-      const entry = { id, date: new Date().toISOString(), dream_text: dream, interpretation: data.interpretation, image_url: null, type: isCounsel ? "counsel" : "dream" };
+      const image_url = adminMode ? (data.image_url || null) : null;
+      const entry = { id, date: new Date().toISOString(), dream_text: dream, interpretation: data.interpretation, image_url, type: isCounsel ? "counsel" : "dream" };
       const prev = JSON.parse(localStorage.getItem("db_journal") || "[]");
       localStorage.setItem("db_journal", JSON.stringify([entry, ...prev]));
-      bgAudio.play().catch(() => {});
-      onResult({ id, interpretation: data.interpretation, dream_text: dream, image_url: null, isPaid, mode, bgAudio });
+      onResult({ id, interpretation: data.interpretation, dream_text: dream, image_url, isPaid, mode, bgAudio });
     } catch {
       showToast(h.errNetwork, "error");
     } finally {
@@ -313,43 +322,38 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
           userComments={userComments[commentsOpen]}
           onAddComment={addComment}
           onClose={() => setCommentsOpen(null)}
-          user={user}
         />,
         document.body
       )}
 
       {/* Hero */}
-      <div style={{ padding: "20px 24px 12px" }}>
-        <h1 style={{ fontFamily: SANS, fontWeight: 700, fontSize: 30, lineHeight: 1.3, letterSpacing: "-.03em", margin: "0 0 10px", color: T.g900 }}>
-          {h.hero[mode].before}<br /><span style={{ color: T.brand }}>{h.hero[mode].highlight}</span>{h.hero[mode].after}
+      <div style={{ padding: "20px 24px 10px" }}>
+        <h1 style={{ fontFamily: SANS, fontWeight: 700, fontSize: 26, lineHeight: 1.35, letterSpacing: "-.03em", margin: 0, color: T.g900 }}>
+          {h.hero[mode].before} <span style={{ color: T.brand }}>{h.hero[mode].highlight}</span>{h.hero[mode].after}
         </h1>
-        <p style={{ fontSize: 16, lineHeight: 1.6, color: T.g600, margin: 0, fontFamily: SANS }}>
-          {h.hero[mode].sub}
-        </p>
       </div>
 
       {/* Mode toggle */}
-      <div style={{ padding: "0 20px 16px", display: "flex" }}>
-        {h.modes.map((m, i) => (
-          <button key={m.id} onClick={() => { setMode(m.id); setDream(""); }} style={{
-            flex: 1, border: `1.5px solid ${mode === m.id ? T.brand : T.g200}`,
-            background: mode === m.id ? T.brand : "#fff",
-            color: mode === m.id ? "#fff" : T.g500,
-            padding: "10px 0", fontFamily: SANS, fontSize: 14, fontWeight: 700,
-            cursor: "pointer",
-            borderRadius: i === 0 ? "10px 0 0 10px" : "0 10px 10px 0",
-            transition: "all .15s",
-          }}>{m.label}</button>
-        ))}
+      <div style={{ padding: "0 20px 16px" }}>
+        <div style={{ display: "flex", background: T.g100, borderRadius: 12, padding: 3 }}>
+          {h.modes.map((m) => (
+            <button key={m.id} onClick={() => { setMode(m.id); setDream(""); }} style={{
+              flex: 1, border: 0,
+              background: mode === m.id ? "#fff" : "transparent",
+              color: mode === m.id ? T.g900 : T.g500,
+              fontFamily: SANS, fontSize: 14,
+              fontWeight: mode === m.id ? 700 : 500,
+              cursor: "pointer", borderRadius: 10,
+              boxShadow: mode === m.id ? "0 1px 4px rgba(25,31,40,.10)" : "none",
+              transition: "all .15s", padding: "11px 0",
+            }}>{m.label}</button>
+          ))}
+        </div>
       </div>
 
       {/* Composer */}
       <div style={{ padding: "4px 20px 8px" }}>
-        <div style={{ background: T.paper, border: `2px solid ${T.g900}`, borderRadius: 16, padding: "16px 18px 12px", boxShadow: `0 2px 0 ${T.g200}` }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: T.brand, letterSpacing: ".01em", fontFamily: SANS }}>{h.composerLabel[mode]}</span>
-            <span style={{ fontSize: 13, color: T.g400, fontWeight: 500, fontFamily: SANS }}>{h.charCount(dream.length)}</span>
-          </div>
+        <div style={{ background: T.g50, border: `1.5px solid ${T.g200}`, borderRadius: 16, padding: "14px 16px 12px" }}>
           <textarea
             ref={dreamTextareaRef}
             value={dream}
@@ -360,22 +364,16 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
             maxLength={2000}
             style={{ width: "100%", border: 0, background: "transparent", resize: "none", fontFamily: SANS, fontSize: 16, lineHeight: 1.65, color: T.g900, outline: "none", minHeight: 80, padding: 0, overflow: "hidden" }}
           />
-          <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px dashed ${T.g200}`, display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 7, height: 7, borderRadius: "50%", background: T.brand, animation: "pulse 1.6s ease-in-out infinite", display: "inline-block", flexShrink: 0 }} />
-              {h.autosave}
-            </span>
-            <span>{h.maxChars}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8, paddingTop: 8, borderTop: `1px solid ${T.g100}` }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: T.brand, opacity: 0.5, animation: "pulse 1.6s ease-in-out infinite", display: "inline-block" }} />
+            <span style={{ fontSize: 12, color: T.g400, fontWeight: 500, fontFamily: SANS }}>{h.charCount(dream.length)}</span>
           </div>
         </div>
       </div>
 
       {/* Chips */}
       <div style={{ padding: "4px 20px 10px" }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: T.g500, margin: "0 0 10px", fontFamily: SANS }}>
-          {h.chipsLabel[mode]}
-        </div>
-        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, margin: "0 -20px", paddingLeft: 20, paddingRight: 20, scrollbarWidth: "none" }}>
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, margin: "0 -20px", paddingLeft: 20, paddingRight: 20, scrollbarWidth: "none" }}>
           {currentChips.map((chip, i) => (
             <button key={i} onClick={() => setDream(chip.fill)} style={{
               flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 6,
@@ -391,7 +389,7 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
       </div>
 
       {/* CTA */}
-      <div style={{ padding: "8px 20px 6px" }}>
+      <div style={{ padding: "12px 20px 8px" }}>
         <button
           disabled={loading}
           onClick={handleSubmit}
@@ -405,8 +403,8 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
           }}>
           {loading ? (
             <>
-              <span style={{ width: 18, height: 18, border: "2.5px solid rgba(255,255,255,.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block" }} />
-              {h.ctaLoading}
+              <span style={{ width: 18, height: 18, border: "2.5px solid rgba(255,255,255,.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite", display: "inline-block", flexShrink: 0 }} />
+              {LOADING_MSGS[loadingMsgIdx]}
             </>
           ) : (
             <>
@@ -415,46 +413,61 @@ export default function HomeScreen({ isPaid, uses, freeLimit, canInterpret, onUs
             </>
           )}
         </button>
-        <p style={{ fontSize: 13, color: T.g500, textAlign: "center", margin: "10px 4px 0", fontWeight: 500, lineHeight: 1.5, fontFamily: SANS }}>
-          {isPaid
-            ? h.proStatus
-            : remaining > 0
-              ? h.freeRemaining(remaining)
-              : h.freeExhausted}
-        </p>
+        {isPaid ? (
+          <p style={{ fontSize: 13, color: T.g500, textAlign: "center", margin: "10px 4px 0", fontWeight: 500, fontFamily: SANS }}>{h.proStatus}</p>
+        ) : (
+          <div style={{ display: "flex", justifyContent: "center", margin: "12px 4px 0" }}>
+            <span style={{
+              background: remaining === 0 ? "#FEF2F2" : remaining === 1 ? "#FFFBEB" : T.brandLight,
+              color: remaining === 0 ? "#DC2626" : remaining === 1 ? "#92400E" : T.brand,
+              border: `1px solid ${remaining === 0 ? "#FECACA" : remaining === 1 ? "#FDE68A" : "#C7D2FE"}`,
+              borderRadius: 999, padding: "6px 18px",
+              fontSize: 13, fontWeight: 700, fontFamily: SANS,
+            }}>
+              {remaining > 0 ? h.freeRemaining(remaining) : h.freeExhausted}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Community feed */}
       <div style={{ borderTop: `8px solid ${T.g100}`, marginTop: 8 }}>
         <div style={{ padding: "20px 20px 12px", display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-          <h3 style={{ fontFamily: SANS, fontWeight: 700, fontSize: 20, margin: 0, color: T.g900, letterSpacing: "-.02em" }}>
+          <h3 style={{ fontFamily: SANS, fontWeight: 700, fontSize: 18, margin: 0, color: T.g900, letterSpacing: "-.02em", flex: 1, minWidth: 0, marginRight: 8 }}>
             {h.communityTitle[mode]}
           </h3>
-          <span style={{ fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS }}>{h.todayCount}</span>
+          <span style={{ fontSize: 13, color: T.g500, fontWeight: 500, fontFamily: SANS, flexShrink: 0 }}>{h.todayCount}</span>
         </div>
         <BannerAd />
         {currentCommunity.map((item, i) => {
           const feedKey = `${mode}_${i}`;
           return (
-            <div key={feedKey} style={{ padding: "14px 20px", borderBottom: `1px solid ${T.g100}` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <div key={feedKey} style={{ padding: "20px 20px", borderBottom: `1px solid ${T.g100}` }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
                 <span style={{ width: 28, height: 28, borderRadius: "50%", background: T.g200, color: T.g700, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{item.avatar}</span>
                 <span style={{ fontSize: 14, color: T.g700, fontWeight: 600, fontFamily: SANS }}>{item.who}</span>
                 <span style={{ fontSize: 13, color: T.g400, fontFamily: SANS }}>· {item.when}</span>
               </div>
-              <p style={{ fontSize: 15, color: T.g900, lineHeight: 1.6, margin: "0 0 12px", fontWeight: 500, fontFamily: SANS }}>{item.dream}</p>
-              <div style={{ background: T.brandLight, borderLeft: `3px solid ${T.brand}`, padding: "12px 14px", borderRadius: 6 }}>
-                <div style={{ fontSize: 12, color: T.brand, fontWeight: 700, letterSpacing: ".04em", marginBottom: 5, fontFamily: SANS }}>{item.verseRef}</div>
-                <p style={{ fontSize: 14, color: T.g700, lineHeight: 1.6, margin: 0, fontFamily: SANS }}>{item.verseText}</p>
+              <p style={{ fontSize: 15, color: T.g900, lineHeight: 1.65, margin: "0 0 14px", fontWeight: 500, fontFamily: SANS }}>{item.dream}</p>
+              <div style={{ background: T.brandLight, borderLeft: `3px solid ${T.brand}`, padding: "14px 16px", borderRadius: 8 }}>
+                <div style={{ fontSize: 12, color: T.brand, fontWeight: 700, letterSpacing: ".04em", marginBottom: 6, fontFamily: SANS }}>{item.verseRef}</div>
+                <p style={{ fontSize: 14, color: T.g700, lineHeight: 1.65, margin: 0, fontFamily: SANS }}>{item.verseText}</p>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 14 }}>
                 <button
                   onClick={() => toggleLike(feedKey)}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: liked[feedKey] ? T.brandLight : "transparent", border: `1px solid ${liked[feedKey] ? T.brand : T.g200}`, borderRadius: 999, padding: "6px 14px", cursor: "pointer", fontFamily: SANS, fontSize: 13, fontWeight: 600, color: liked[feedKey] ? T.brand : T.g500, transition: "all .15s" }}>
                   {liked[feedKey] ? "♥" : "♡"} {h.like} {item.likes + (liked[feedKey] ? 1 : 0)}
                 </button>
                 <button
-                  onClick={() => setCommentsOpen(feedKey)}
+                  onClick={() => {
+                    if (!user) {
+                      sessionStorage.setItem("after_login_comments", feedKey);
+                      signInWithGoogle();
+                      return;
+                    }
+                    setCommentsOpen(feedKey);
+                  }}
                   style={{ display: "flex", alignItems: "center", gap: 5, background: "transparent", border: `1px solid ${T.g200}`, borderRadius: 999, padding: "6px 14px", cursor: "pointer", fontFamily: SANS, fontSize: 13, fontWeight: 600, color: T.g500, transition: "all .15s" }}>
                   💬 {h.comment} {(item.commentList?.length || 0) + (userComments[feedKey]?.length || 0)}
                 </button>
