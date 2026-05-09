@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { setCors } from "./_lib/cors.js";
-import { checkAndIncrementUsage } from "./_lib/usage.js";
+import { checkAndIncrementUsage, logEvent } from "./_lib/usage.js";
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -106,6 +106,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: isEn ? "Failed to generate interpretation. Please try again." : "해석을 생성하는 중 오류가 발생했습니다." });
   }
 
+  logEvent(userId, "interpret", lang);
   return res.status(200).json({
     interpretation: interpretResult.value.text ?? "",
     image_url: imageResult.status === "fulfilled" ? imageResult.value : null,

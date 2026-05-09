@@ -5,6 +5,7 @@ import JournalScreen from "./screens/JournalScreen.jsx";
 import WordScreen from "./screens/WordScreen.jsx";
 import MeScreen from "./screens/MeScreen.jsx";
 import ResultScreen from "./screens/ResultScreen.jsx";
+import AdminScreen from "./screens/AdminScreen.jsx";
 import { L } from "./lang/index.js";
 import { supabase, isAdmin } from "./lib/supabase.js";
 
@@ -64,6 +65,7 @@ export default function App() {
   });
   const [uses, setUses] = useState(getUses);
   const [scrolled, setScrolled] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const scrollRef = useRef(null);
 
   // History API: result 화면을 "페이지"로 등록해 Toss 뒤로가기가 닫기로 동작하게 함
@@ -196,7 +198,7 @@ export default function App() {
           )}
           {tab === "journal" && <JournalScreen onOpenResult={openResult} />}
           {tab === "word" && <WordScreen />}
-          {tab === "me" && <MeScreen isPaid={effectiveIsPaid} uses={uses} user={user} userId={getUserId()} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} />}
+          {tab === "me" && <MeScreen isPaid={effectiveIsPaid} uses={uses} user={user} userId={getUserId()} onReset={(mode) => { if (mode === "paid") { setIsPaid(true); } else { setUses(0); setIsPaid(false); } }} onOpenAdmin={adminMode ? () => setAdminOpen(true) : null} />}
         </div>
 
         {/* Bottom tab bar */}
@@ -222,6 +224,9 @@ export default function App() {
 
         {/* Result overlay */}
         {result && <ResultScreen result={result} onClose={closeResult} />}
+
+        {/* Admin overlay */}
+        {adminOpen && <AdminScreen userId={user?.id} onClose={() => setAdminOpen(false)} />}
       </div>
     </ToastProvider>
   );

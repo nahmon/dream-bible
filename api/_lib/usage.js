@@ -61,3 +61,8 @@ export async function checkAndIncrementUsage(userId) {
 
   return { allowed: true, isPaid: false, remaining: FREE_LIMIT - count - 1 };
 }
+
+export async function logEvent(userId, eventType, lang = "ko") {
+  if (!userId) return;
+  await supabase.from("user_events").insert({ user_id: userId, event_type: eventType, lang }).catch(() => {});
+}

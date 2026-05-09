@@ -39,7 +39,7 @@ function exportJournal(entries) {
   URL.revokeObjectURL(url);
 }
 
-export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
+export default function MeScreen({ isPaid, uses, user, userId, onReset, onOpenAdmin }) {
   const { showToast } = useToast();
   const admin = isAdmin(user);
   const m = L.home.me;
@@ -86,6 +86,16 @@ export default function MeScreen({ isPaid, uses, user, userId, onReset }) {
           </div>
         ))}
       </div>
+
+      {admin && onOpenAdmin && (
+        <button
+          onClick={onOpenAdmin}
+          style={{ width: "100%", background: T.brand, border: "none", borderRadius: 14, padding: "14px 18px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 700, color: "#fff", fontFamily: SANS }}>Admin Dashboard</span>
+          <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", fontFamily: SANS }}>{">"}</span>
+        </button>
+      )}
 
       {isPaid && !admin && (
         <div style={{ background: "#EEF2FF", border: "1px solid #C7D2FE", borderRadius: 14, padding: "14px 18px", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>

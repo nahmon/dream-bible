@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { setCors } from "./_lib/cors.js";
-import { checkAndIncrementUsage } from "./_lib/usage.js";
+import { checkAndIncrementUsage, logEvent } from "./_lib/usage.js";
 
 const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -78,6 +78,7 @@ export default async function handler(req, res) {
       config: { thinkingConfig: { thinkingBudget: 0 } },
       contents: `${SYSTEM_PROMPT}\n\n${situationLabel}:\n${situation_text.trim()}`,
     });
+    logEvent(userId, "counsel", lang);
     return res.status(200).json({ interpretation: result.text ?? "" });
   } catch (err) {
     console.error("Gemini counsel error:", err?.message ?? err);
