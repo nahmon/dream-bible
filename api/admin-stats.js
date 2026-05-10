@@ -6,9 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ADMIN_USER_IDS = new Set(
-  (process.env.ADMIN_USER_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean)
-);
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? process.env.VITE_ADMIN_EMAIL ?? "";
 
 export default async function handler(req, res) {
   setCors(res, req.headers.origin);
@@ -16,7 +14,11 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { userId } = req.body ?? {};
-  if (!userId || !ADMIN_USER_IDS.has(userId)) {
+  if (!userId || !ADMIN_EMAIL) return res.status(403).json({ error: "Forbidden" });
+
+  // Verify user identity via Supabase admin API
+  const { data: { user: authUser }, error: authErr } = await supabase.auth.admin.getUserById(userId);
+  if (authErr || !authUser || authUser.email !== ADMIN_EMAIL) {
     return res.status(403).json({ error: "Forbidden" });
   }
 
