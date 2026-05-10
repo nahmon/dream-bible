@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       config: { thinkingConfig: { thinkingBudget: 0 } },
       contents: `${SYSTEM_PROMPT}\n\n${situationLabel}:\n${situation_text.trim()}`,
     });
-    logEvent(userId, "counsel", lang);
+    logEvent(userId, "counsel", lang, situation_text);
     return res.status(200).json({ interpretation: result.text ?? "" });
   } catch (err) {
     console.error("Gemini counsel error:", err?.message ?? err);

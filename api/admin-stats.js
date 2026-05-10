@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   // Fetch last 60 days of events for all calculations
   const { data: events = [] } = await supabase
     .from("user_events")
-    .select("user_id, event_type, lang, created_at")
+    .select("user_id, event_type, lang, created_at, input_text")
     .gte("created_at", ago(60))
     .order("created_at", { ascending: false });
 
@@ -62,6 +62,7 @@ export default async function handler(req, res) {
     event_type: e.event_type,
     lang: e.lang,
     created_at: e.created_at,
+    input_text: e.input_text ?? null,
   }));
 
   // Breakdown by type

@@ -141,24 +141,34 @@ export default function AdminScreen({ userId, onClose }) {
                 <div style={{ background: "#fff", border: `1px solid ${T.g200}`, borderRadius: 12, overflow: "hidden" }}>
                   {stats.recent.map((e, i) => (
                     <div key={i} style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
                       padding: "10px 14px",
                       borderTop: i > 0 ? `1px solid ${T.g100}` : "none",
                     }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <span style={{
-                          fontSize: 10, fontWeight: 700, color: "#fff",
-                          background: e.event_type === "interpret" ? T.brand : T.gold,
-                          borderRadius: 4, padding: "2px 6px",
-                        }}>
-                          {e.event_type === "interpret" ? "꿈" : "상담"}
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, color: "#fff",
+                            background: e.event_type === "interpret" ? T.brand : T.gold,
+                            borderRadius: 4, padding: "2px 6px",
+                          }}>
+                            {e.event_type === "interpret" ? "꿈" : "상담"}
+                          </span>
+                          <span style={{ fontSize: 12, color: T.g700, fontFamily: "monospace" }}>{e.user_id}</span>
+                          <span style={{ fontSize: 11, color: T.g400 }}>{e.lang}</span>
+                        </div>
+                        <span style={{ fontSize: 11, color: T.g400 }}>
+                          {new Date(e.created_at).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        <span style={{ fontSize: 12, color: T.g700, fontFamily: "monospace" }}>{e.user_id}</span>
-                        <span style={{ fontSize: 11, color: T.g400 }}>{e.lang}</span>
                       </div>
-                      <span style={{ fontSize: 11, color: T.g400 }}>
-                        {new Date(e.created_at).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                      </span>
+                      {e.input_text && (
+                        <div style={{
+                          marginTop: 6, fontSize: 12, color: T.g600, lineHeight: 1.5,
+                          background: T.g50, borderRadius: 6, padding: "6px 8px",
+                          whiteSpace: "pre-wrap", wordBreak: "break-word",
+                        }}>
+                          {e.input_text}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
